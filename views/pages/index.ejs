@@ -1,21 +1,32 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>MATH TIME!!!!1!!!!!</title>
-    </head>
-    <body>
-        <h1>Let's do math</h1>
-        <form class="" action="/math" method="get">
-            <select name="operator">
-                <option value="add">+</option>
-                <option value="subtract">-</option>
-                <option value="divide">/</option>
-                <option value="multiply">*</option>
-            </select>
-            <input type="number" name="input1" value="0">
-            <input type="number" name="input2" value="0">
+
+<head>
+    <meta charset="utf-8">
+    <title>USPS Retail Prices</title>
+    <link href="stylesheets/main.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+    <div class="card">
+        <h1 class="title">USPS Postage Costs:</h1>
+        <form class="form-field" action="/postage" method="get">
+            <div class="input-field">
+                <p><label for="weight">Weight: (oz)</label></p>
+                <p><input type="number" name="weight" value="0" min="0" max="13"></p>
+            </div>
+            <div class="select-field">
+                <p><label for="mailType">Type of Mail</label></p>
+                <p><select name="mailType">
+                <option value="0">Letters (Stamped)</option>
+                <option value="1">Letters (Metered)</option>
+                <option value="2">Large Envelopes (Flats)</option>
+                <option value="3">Parcels</option>
+            </select></p>
+            </div>
             <button type="submit">Calculate</button>
         </form>
-    </body>
+    </div>
+</body>
+
 </html>
