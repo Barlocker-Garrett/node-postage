@@ -1,190 +1,324 @@
 var express = require('express');
 var app = express();
+var bodyParser = require('body-parser');
+const format = require('pg-format');
+const pool = require('./database.js');
+var account = require('./database/useraccount.js');
+var gameLobby = require('./database/gamelobby.js');
+var game = require('./database/game.js');
 
 app.set('port', (process.env.PORT || 5000));
 
 app.use(express.static(__dirname + '/public'));
 
+app.use(bodyParser.json());
+
 // views is directory for all template files
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
-app.get('/', function(request, response) {
-    response.render('pages/index');
+app.get('/', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        var ageQuery = format('SELECT * from users')
+        client.query(ageQuery, function (err, result) {
+            if (err) throw new Error(err);
+            res.json(result.rows[0]);
+        })
+    });
+    /*response.render('pages/index');*/
 });
 
-app.get('/postage', function(request, response) {
-    var resObj = calculate(request, response);
-
-    response.render('pages/cost', {
-        weight: request.query.weight,
-        type: resObj.type,
-        cost: resObj.cost
-    })
-
+app.post('/createAccount', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.username != null && req.body.password != null) {
+            account.createAccount(req.body.username, req.body.password, client, res);
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
 });
 
-app.listen(app.get('port'), function() {
+app.post('/login', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.username != null && req.body.password != null) {
+            account.login(req.body.username, req.body.password, client, res);
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/createGame', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.title != null && req.body.playerCount != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.createGame(req.body.title, req.body.playerCount, valid, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/joinGame', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.joinGame(req.body.gameId, valid, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.delete('/leaveGame', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.playerId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.leaveGame(req.body.playerId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.delete('/deleteGame', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.deleteGame(req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/startGame', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.startGame(req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/getGames', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.getGames(client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/drawCard', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    game.drawCard(valid, req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/endTurn', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null && req.body.teamId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    game.endTurn(valid, req.body.gameId, req.body.teamId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/getDiscardPile', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    game.getDiscardPile(req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/getPlayers', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    game.getPlayers(req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/getHand', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    game.getHand(valid, req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.post('/getPlayerTurn', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    game.getPlayerTurn(req.body.gameId, client, res);
+                } else {
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+app.listen(app.get('port'), function () {
     console.log('Node app is running on port', app.get('port'));
 });
-
-function calculate(request, response){
-    var cost = null;
-    var type = null;
-    var weight = request.query.weight;
-    switch (request.query.mailType) {
-        case '0': // Letters (Stamped)
-            cost = calculateStamped(weight);
-            type = "Letters (Stamped)"
-            break;
-        case '1': // Letters (Metered)
-            cost = calculateMetered(weight);
-            type = "Letters (Metered)"
-            break;
-        case '2': // Large Envelopes (Flats)
-            cost = calculateEnvelopes(weight);
-            type = "Large Envelopes"
-            break;
-        case '3': // Parcels
-            cost = calculateParcels(weight);
-            type = "Parcels"
-            break;
-        default:
-            console.log("You got problems in the switch statement....");
-    }
-    if (cost != null) {
-        cost = formatDollars(cost);
-    } else {
-        cost = "Nope"
-    }
-    return {"cost": cost,"type":type};
-}
-
-function formatDollars(cost) {
-    var formatter = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2
-    });
-    return formatter.format(cost);
-}
-
-function calculateStamped(weight) {
-    if (weight < 0) {
-        return null;
-    } else if (weight <= 1) {
-        return .49;
-    } else if (weight <= 2) {
-        return .7;
-    } else if (weight <= 3) {
-        return .91;
-    } else if (weight <= 3.5) {
-        return 1.12;
-    } else {
-        return null;
-    }
-}
-
-function calculateMetered(weight) {
-    if (weight < 0) {
-        return null;
-    } else if (weight <= 1) {
-        return .46;
-    } else if (weight <= 2) {
-        return .67;
-    } else if (weight <= 3) {
-        return .88;
-    } else if (weight <= 3.5) {
-        return 1.09;
-    } else {
-        return null;    
-    }
-}
-
-function calculateEnvelopes(weight) {
-    if (weight < 0) {
-        return null;
-    } else if (weight <= 1) {
-        return .98;
-    } else if (weight <= 2) {
-        return 1.19;
-    } else if (weight <= 3) {
-        return 1.4;
-    } else if (weight <= 4) {
-        return 1.61;
-    } else if (weight <= 5) {
-        return 1.82;
-    } else if (weight <= 6) {
-        return 2.03;
-    } else if (weight <= 7) {
-        return 2.24;
-    } else if (weight <= 8) {
-        return 2.45;
-    } else if (weight <= 9) {
-        return 2.66;
-    } else if (weight <= 10) {
-        return 2.87;
-    } else if (weight <= 11) {
-        return 3.08;
-    } else if (weight <= 12) {
-        return 3.29;
-    } else if (weight <= 13) {
-        return 3.5;
-    } else {
-        return null;
-    }
-}
-
-function calculateParcels(weight) {
-    if (weight < 0) {
-        return null;
-    } else if (weight <= 1) {
-        return 2.67;
-    } else if (weight <= 2) {
-        return 2.67;
-    } else if (weight <= 3) {
-        return 2.67;
-    } else if (weight <= 4) {
-        return 2.67;
-    } else if (weight <= 5) {
-        return 2.85;
-    } else if (weight <= 6) {
-        return 3.03;
-    } else if (weight <= 7) {
-        return 3.21;
-    } else if (weight <= 8) {
-        return 3.39;
-    } else if (weight <= 9) {
-        return 3.57;
-    } else if (weight <= 10) {
-        return 3.75;
-    } else if (weight <= 11) {
-        return 3.93;
-    } else if (weight <= 12) {
-        return 4.11;
-    } else if (weight <= 13) {
-        return 4.29;
-    } else {
-        return null;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
