@@ -21,8 +21,7 @@ app.get('/', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) {
             console.log(err);
-        }
-        else {
+        } else {
             res.json({
                 success: true
             });
@@ -32,7 +31,9 @@ app.get('/', function (req, res) {
 
 app.post('/createAccount', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.username != null && req.body.password != null) {
             account.createAccount(req.body.username, req.body.password, client, res);
         } else {
@@ -45,7 +46,9 @@ app.post('/createAccount', function (req, res) {
 
 app.post('/login', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.username != null && req.body.password != null) {
             account.login(req.body.username, req.body.password, client, res);
         } else {
@@ -58,7 +61,9 @@ app.post('/login', function (req, res) {
 
 app.post('/createGame', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.title != null && req.body.playerCount != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -80,7 +85,9 @@ app.post('/createGame', function (req, res) {
 
 app.post('/joinGame', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -102,7 +109,9 @@ app.post('/joinGame', function (req, res) {
 
 app.delete('/leaveGame', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.playerId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -124,7 +133,9 @@ app.delete('/leaveGame', function (req, res) {
 
 app.delete('/deleteGame', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -146,7 +157,9 @@ app.delete('/deleteGame', function (req, res) {
 
 app.post('/startGame', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -168,7 +181,9 @@ app.post('/startGame', function (req, res) {
 
 app.post('/getGames', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -190,7 +205,9 @@ app.post('/getGames', function (req, res) {
 
 app.post('/drawCard', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -212,7 +229,9 @@ app.post('/drawCard', function (req, res) {
 
 app.post('/endTurn', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null && req.body.teamId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -234,7 +253,9 @@ app.post('/endTurn', function (req, res) {
 
 app.post('/getDiscardPile', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -256,7 +277,9 @@ app.post('/getDiscardPile', function (req, res) {
 
 app.post('/getPlayers', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -278,7 +301,9 @@ app.post('/getPlayers', function (req, res) {
 
 app.post('/getHand', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
@@ -300,7 +325,9 @@ app.post('/getHand', function (req, res) {
 
 app.post('/getPlayerTurn', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
+        if (err) {
+            console.log(err);
+        }
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
