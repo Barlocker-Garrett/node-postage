@@ -2,7 +2,8 @@ var pg = require('pg')
 pg.defaults.ssl = true;
 
 var config = {
-  url: 'ec2-54-163-254-76.compute-1.amazonaws.com',
+  host: 'ec2-54-163-254-76.compute-1.amazonaws.com',
+  port: 5432,
   user: 'dmevjejangdqdf', // name of the user account
   database: 'detl5lhln3583p', // name of the database
   password: '075885152140cafe91c44c910183efcdd5dc8bf1b43261ee57064b23adbd57ef',
