@@ -19,14 +19,15 @@ app.set('view engine', 'ejs');
 
 app.get('/', function (req, res) {
     pool.connect(function (err, client, done) {
-        if (err) throw new Error(err);
-        var ageQuery = format('SELECT * from users')
-        client.query(ageQuery, function (err, result) {
-            if (err) throw new Error(err);
-            res.json(result.rows[0]);
-        })
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.json({
+                success: true
+            });
+        };
     });
-    /*response.render('pages/index');*/
 });
 
 app.post('/createAccount', function (req, res) {
