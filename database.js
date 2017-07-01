@@ -1,16 +1,13 @@
-var pg = require('pg')
-pg.defaults.ssl = true;
-
-var config = {
-  host: 'ec2-54-163-254-76.compute-1.amazonaws.com',
-  port: 5432,
-  user: 'dmevjejangdqdf', // name of the user account
-  database: 'detl5lhln3583p', // name of the database
-  password: '075885152140cafe91c44c910183efcdd5dc8bf1b43261ee57064b23adbd57ef',
-  max: 50, // max number of clients in the pool
-  idleTimeoutMillis: 30000 
+var pg = require('pg');
+if (process.env.DATABASE_URL) {
+  pg.defaults.ssl = true;
 }
 
-var pool = new pg.Pool(config);
+var connString = process.env.DATABASE_URL || 'postgresql://postgres:root@localhost:5432/sequence';
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString : connString
+});
 
 module.exports = pool;

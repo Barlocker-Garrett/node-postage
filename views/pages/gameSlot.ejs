@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sequence - Lobby</title>
+    <% include ../partials/header.ejs %>
+    <script type="text/javascript" src="/script/gameLobby.js"></script>
+</head>
+
+<body>
+
+    <% include ../partials/nav.ejs %>
+
+        <div class="row">
+            <div class="col s1"></div>
+            <div class="col s12 m6">
+                <table class='bordered striped'>
+                    <thead>
+                        <tr>
+                            <th>Player Name</th>
+                            <th>Team</th>
+                            <th title='<%= id %>' id='buttonLeave'><a class="waves-effect waves-light btn white-text blue lighten-2 right">Leave</a></th>
+                            <th id="refreshPlayers"><i class="material-icons blue-text lighten-2 right">loop</i></th>
+                        </tr>
+                    </thead>
+                    <tbody id='playersTable'>
+                        <% include ../partials/players.ejs %>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col s1"></div>
+            <div class="col s6 m3">
+                <p>Advertisement Here</p>
+                <a id="startGame" class="waves-effect waves-light btn white-text blue lighten-2 right">Start Game</a>
+            </div>
+        </div>
+</body>
+
+</html>

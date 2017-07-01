@@ -158,7 +158,7 @@ var getDiscardPile = function (gameId, client, _res) {
     });
 }
 
-var getPlayers = function (gameId, client, _res) {
+/*var getPlayers = function (gameId, client, _res) {
     // get all of the players and their data for the view
     client.query('SELECT username, teamid, color FROM users JOIN player ON player.usersid = users.id JOIN team ON team.id = player.teamid WHERE team.game_id = $1', [gameId], (err, result) => {
         if (err) {
@@ -173,6 +173,26 @@ var getPlayers = function (gameId, client, _res) {
                 success: false,
                 message: "Unable to get the players in this game"
             });
+        }
+    });
+}*/
+
+var getPlayers = function (client, gameId, callback) {
+    // get all of the players and their data for the view
+    var players = [];
+    console.log("gameId:" + gameId);
+    client.query('SELECT username, teamid, color FROM users JOIN player ON player.usersid = users.id JOIN team ON team.id = player.teamid WHERE team.game_id = $1', [gameId], (err, result) => {
+        if (err) {
+            console.log(err);
+        } else {
+            for (var i = 0; i < result.rowCount; i++) {
+                var player = {};
+                player.username = result.rows[i].username;
+                player.teamid = result.rows[i].teamid;
+                player.color = result.rows[i].color;
+                players.push(player);
+            }
+            callback(null, players);
         }
     });
 }

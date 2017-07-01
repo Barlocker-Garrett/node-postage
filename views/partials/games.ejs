@@ -1,0 +1,15 @@
+<% results.forEach(function(r) { %>
+    <tr>
+        <td class="td-value">
+            <%= r.title %>
+        </td>
+        <td class="td-value">
+            (
+            <%= r.count %>/
+                <%= r.player_count %>)
+        </td>
+        <td title='<%= r.id %>' class="buttonJoin">
+            <a class="waves-effect waves-light btn white-text blue lighten-2 right">Join</a>
+        </td>
+    </tr>
+    <% }); %>

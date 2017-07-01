@@ -322,9 +322,35 @@ var getGames = function (client, _res) {
     });
 }
 
+/*
+ * Gets a list of all of the non-full games
+ */
+var getListOfGames = function (client, games, callback) {
+    var games = [];
+    client.query('select count(player.id), game.id, game.player_count, game.title, game.url from game join team on team.game_id = game.id join player on player.teamid = team.id group by game.id', [], (err, result) => {
+        if (err) {
+            console.log(err);
+        } else {
+            for (var i = 0; i < result.rowCount; i++) {
+                if (result.rows[i].count < result.rows[i].player_count) {
+                    var game = {};
+                    game.id = result.rows[i].id;
+                    game.count = result.rows[i].count;
+                    game.player_count = result.rows[i].player_count;
+                    game.title = result.rows[i].title;
+                    game.url = result.rows[i].url;
+                    games.push(game);
+                }
+            }
+            callback(null, games);
+        }
+    });
+}
+
 exports.createGame = createGame;
 exports.joinGame = joinGame;
 exports.leaveGame = leaveGame;
 exports.deleteGame = deleteGame;
 exports.startGame = startGame;
 exports.getGames = getGames;
+exports.getListOfGames = getListOfGames;

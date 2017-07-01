@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Sequence</title>
+    <% include ../partials/header.ejs %>
+    <link href="/stylesheets/game.css" rel="stylesheet" type="text/css" />
+    <script src="/script/game.js"></script>
+</head>
+
+<body>
+    <div id="title">
+        <h1>Sequence</h1>
+    </div>
+    <div id="rules">
+        <div class="jacks">
+            &#9679;&nbsp;Two Eyed Jacks Are Wild&nbsp;&#9679;
+        </div>
+        <div class="jacks">
+            &#9679;&nbsp;One Eyed Jacks Remove&nbsp;&#9679;
+        </div>
+    </div>
+
+    <div id="hand_container">
+        <div id="toggle_hand" class="select_toggle">
+            <div id="toggle">▼</div>
+        </div>
+        <div id="hand" class="select_toggle">
+            <div class="hand_slot">
+                <img class="card_in_hand" src="/images/10_of_spades.svg" alt="">
+            </div>
+            <div class="hand_slot">
+                <img class="card_in_hand" src="/images/2_of_diamonds.svg" alt="">
+            </div>
+            <div class="hand_slot">
+                <img class="card_in_hand" src="/images/5_of_hearts.svg" alt="">
+            </div>
+            <div class="hand_slot">
+                <img class="card_in_hand" src="/images/king_of_diamonds.svg" alt="">
+            </div>
+            <div class="hand_slot">
+                <img class="card_in_hand" src="/images/ace_of_diamonds.svg" alt="">
+            </div>
+        </div>
+    </div>
+
+    <div id="deck_discard">
+        <div id="deck">
+            <img class="draw_card" src="/images/card_back_blue.svg" alt="Draw a card">
+        </div>
+        <div id="discard">
+            <img class="discard_card" src="/images/ace_of_spades.svg" alt="Discard pile">
+        </div>
+    </div>
+
+
+    <div id="board">
+        <div class="row">
+            <img class="card" src="/images/card_back_blue.svg" alt="Free Space">
+            <img class="card" src="/images/10_of_spades.svg" alt="">
+            <img class="card" src="/images/queen_of_spades.svg" alt="">
+            <img class="card" src="/images/king_of_spades.svg" alt="">
+            <img class="card" src="/images/ace_of_spades.svg" alt="">
+            <img class="card" src="/images/2_of_diamonds.svg" alt="">
+            <img class="card" src="/images/3_of_diamonds.svg" alt="">
+            <img class="card" src="/images/4_of_diamonds.svg" alt="">
+            <img class="card" src="/images/5_of_diamonds.svg" alt="">
+            <img class="card" src="/images/card_back_blue.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/9_of_spades.svg" alt="">
+            <img class="card" src="/images/10_of_hearts.svg" alt="">
+            <img class="card" src="/images/9_of_hearts.svg" alt="">
+            <img class="card" src="/images/8_of_hearts.svg" alt="">
+            <img class="card" src="/images/7_of_hearts.svg" alt="">
+            <img class="card" src="/images/6_of_hearts.svg" alt="">
+            <img class="card" src="/images/5_of_hearts.svg" alt="">
+            <img class="card" src="/images/4_of_hearts.svg" alt="">
+            <img class="card" src="/images/3_of_hearts.svg" alt="">
+            <img class="card" src="/images/6_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/8_of_spades.svg" alt="">
+            <img class="card" src="/images/queen_of_hearts.svg" alt="">
+            <img class="card" src="/images/7_of_diamonds.svg" alt="">
+            <img class="card" src="/images/8_of_diamonds.svg" alt="">
+            <img class="card" src="/images/9_of_diamonds.svg" alt="">
+            <img class="card" src="/images/10_of_diamonds.svg" alt="">
+            <img class="card" src="/images/queen_of_diamonds.svg" alt="">
+            <img class="card" src="/images/king_of_diamonds.svg" alt="">
+            <img class="card" src="/images/2_of_hearts.svg" alt="">
+            <img class="card" src="/images/7_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/7_of_spades.svg" alt="">
+            <img class="card" src="/images/king_of_hearts.svg" alt="">
+            <img class="card" src="/images/6_of_diamonds.svg" alt="">
+            <img class="card" src="/images/2_of_clubs.svg" alt="">
+            <img class="card" src="/images/ace_of_hearts.svg" alt="">
+            <img class="card" src="/images/king_of_hearts.svg" alt="">
+            <img class="card" src="/images/queen_of_hearts.svg" alt="">
+            <img class="card" src="/images/ace_of_diamonds.svg" alt="">
+            <img class="card" src="/images/2_of_spades.svg" alt="">
+            <img class="card" src="/images/8_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/6_of_spades.svg" alt="">
+            <img class="card" src="/images/ace_of_hearts.svg" alt="">
+            <img class="card" src="/images/5_of_diamonds.svg" alt="">
+            <img class="card" src="/images/3_of_clubs.svg" alt="">
+            <img class="card" src="/images/4_of_hearts.svg" alt="">
+            <img class="card" src="/images/3_of_hearts.svg" alt="">
+            <img class="card" src="/images/10_of_hearts.svg" alt="">
+            <img class="card" src="/images/ace_of_clubs.svg" alt="">
+            <img class="card" src="/images/3_of_spades.svg" alt="">
+            <img class="card" src="/images/9_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/5_of_spades.svg" alt="">
+            <img class="card" src="/images/2_of_clubs.svg" alt="">
+            <img class="card" src="/images/4_of_diamonds.svg" alt="">
+            <img class="card" src="/images/4_of_clubs.svg" alt="">
+            <img class="card" src="/images/5_of_hearts.svg" alt="">
+            <img class="card" src="/images/2_of_hearts.svg" alt="">
+            <img class="card" src="/images/9_of_hearts.svg" alt="">
+            <img class="card" src="/images/king_of_clubs.svg" alt="">
+            <img class="card" src="/images/4_of_spades.svg" alt="">
+            <img class="card" src="/images/10_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/4_of_spades.svg" alt="">
+            <img class="card" src="/images/3_of_clubs.svg" alt="">
+            <img class="card" src="/images/3_of_diamonds.svg" alt="">
+            <img class="card" src="/images/5_of_clubs.svg" alt="">
+            <img class="card" src="/images/6_of_hearts.svg" alt="">
+            <img class="card" src="/images/7_of_hearts.svg" alt="">
+            <img class="card" src="/images/8_of_hearts.svg" alt="">
+            <img class="card" src="/images/queen_of_clubs.svg" alt="">
+            <img class="card" src="/images/5_of_spades.svg" alt="">
+            <img class="card" src="/images/queen_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/3_of_spades.svg" alt="">
+            <img class="card" src="/images/4_of_clubs.svg" alt="">
+            <img class="card" src="/images/2_of_diamonds.svg" alt="">
+            <img class="card" src="/images/6_of_clubs.svg" alt="">
+            <img class="card" src="/images/7_of_clubs.svg" alt="">
+            <img class="card" src="/images/8_of_clubs.svg" alt="">
+            <img class="card" src="/images/9_of_clubs.svg" alt="">
+            <img class="card" src="/images/10_of_clubs.svg" alt="">
+            <img class="card" src="/images/6_of_spades.svg" alt="">
+            <img class="card" src="/images/king_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/2_of_spades.svg" alt="">
+            <img class="card" src="/images/5_of_clubs.svg" alt="">
+            <img class="card" src="/images/ace_of_spades.svg" alt="">
+            <img class="card" src="/images/king_of_spades.svg" alt="">
+            <img class="card" src="/images/queen_of_spades.svg" alt="">
+            <img class="card" src="/images/10_of_spades.svg" alt="">
+            <img class="card" src="/images/9_of_spades.svg" alt="">
+            <img class="card" src="/images/8_of_spades.svg" alt="">
+            <img class="card" src="/images/7_of_spades.svg" alt="">
+            <img class="card" src="/images/ace_of_diamonds.svg" alt="">
+        </div>
+        <div class="row">
+            <img class="card" src="/images/card_back_blue.svg" alt="">
+            <img class="card" src="/images/6_of_clubs.svg" alt="">
+            <img class="card" src="/images/7_of_clubs.svg" alt="">
+            <img class="card" src="/images/8_of_clubs.svg" alt="">
+            <img class="card" src="/images/9_of_clubs.svg" alt="">
+            <img class="card" src="/images/10_of_clubs.svg" alt="">
+            <img class="card" src="/images/queen_of_clubs.svg" alt="">
+            <img class="card" src="/images/king_of_clubs.svg" alt="">
+            <img class="card" src="/images/ace_of_clubs.svg" alt="">
+            <img class="card" src="/images/card_back_blue.svg" alt="">
+        </div>
+    </div>
+</body>
+
+</html>
