@@ -59,6 +59,8 @@ function createGame(data) {
                 $("#title")[0].value = "";
                 $('input[name=group1]:checked')[0].checked = false;
                 refreshGames(getCreds());
+                var creds = getCreds();
+                $("html").load("/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId);
             }
         },
         failure: function (errMsg) {
@@ -112,7 +114,6 @@ function joinGame(data) {
                 teamData = JSON.parse(teamData);
             }
             if (teamData.success == true) {
-                console.log(teamData);
                 var creds = getCreds();
                 $("html").load("/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId);
             }
