@@ -48,6 +48,7 @@ app.get('/gameLobby', function (req, res) {
             var valid = null;
             account.verify(req.query.userId, req.query.token, client, function (error, valid) {
                 if (valid == req.query.userId) {
+                    done(err);
                     var games = null;
                     gameLobby.getListOfGames(client, games, function (error, games) {
                         res.render("./pages/gameLobby.ejs", {
@@ -55,10 +56,12 @@ app.get('/gameLobby', function (req, res) {
                         });
                     });
                 } else {
+                    done(err);
                     res.render("./pages/login.ejs");
                 }
             });
         } else {
+            done(err);
             res.render("./pages/login.ejs");
         }
     });
@@ -72,12 +75,15 @@ app.get('/loadGame', function (req, res) {
             var valid = null;
             account.verify(req.query.userId, req.query.token, client, function (error, valid) {
                 if (valid == req.query.userId) {
+                    done(err);
                     res.render("./pages/game.ejs", {});
                 } else {
+                    done(err);
                     res.render("./pages/login.ejs");
                 }
             });
         } else {
+            done(err);
             res.render("./pages/login.ejs");
         }
     });
@@ -88,8 +94,10 @@ app.post('/createAccount', function (req, res) {
         if (err) throw new Error(err);
         console.log(req.body);
         if (req.body.username != null && req.body.password != null) {
+            done(err);
             account.createAccount(req.body.username, req.body.password, client, res);
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -102,8 +110,10 @@ app.post('/login', function (req, res) {
         if (err) throw new Error(err);
         console.log(req.body);
         if (req.body.username != null && req.body.password != null) {
+            done(err);
             account.login(req.body.username, req.body.password, client, res, io);
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -119,13 +129,16 @@ app.post('/createGame', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     gameLobby.createGame(req.body.title, req.body.playerCount, valid, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -141,13 +154,16 @@ app.post('/joinGame', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     gameLobby.joinGame(req.body.gameId, valid, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -167,16 +183,19 @@ app.get('/getGameSlot', function (req, res) {
                 if (valid == req.query.userId) {
                     var players = null;
                     game.getPlayers(client, gameId, function (error, players) {
+                        done(err);
                         res.render("./pages/gameSlot.ejs", {
                             results: players,
                             id: playerId
                         });
                     });
                 } else {
+                    done(err);
                     res.render("./pages/login.ejs");
                 }
             });
         } else {
+            done(err);
             res.render("./pages/login.ejs");
         }
     });
@@ -190,13 +209,16 @@ app.delete('/leaveGame', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     gameLobby.leaveGame(req.body.playerId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -212,13 +234,16 @@ app.delete('/deleteGame', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     gameLobby.deleteGame(req.body.gameId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -234,13 +259,16 @@ app.post('/startGame', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     gameLobby.startGame(req.body.gameId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -257,15 +285,18 @@ app.post('/getGames', function (req, res) {
                 if (valid == req.body.userId) {
                     var games = null;
                     gameLobby.getListOfGames(client, games, function (error, games) {
+                        done(err);
                         res.render("./partials/games.ejs", {
                             results: games
                         });
                     });
                 } else {
+                    done(err);
                     res.render("./pages/login.ejs");
                 }
             });
         } else {
+            done(err);
             res.render("./pages/login.ejs");
         }
     });
@@ -283,16 +314,19 @@ app.post('/getPlayers', function (req, res) {
                     var players = null;
                     game.getPlayers(client, gameId, function (error, players) {
                         console.log(players);
+                        done(err);
                         res.render("./partials/players.ejs", {
                             results: players
                         });
                     });
                 } else {
+                    done(err);
                     console.log("Invalid Login");
                     res.render("./pages/login.ejs");
                 }
             });
         } else {
+            done(err);
             console.log("Invalid REQ");
             res.render("./pages/login.ejs");
         }
@@ -307,13 +341,16 @@ app.post('/drawCard', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     game.drawCard(valid, req.body.gameId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -329,13 +366,16 @@ app.post('/endTurn', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     game.endTurn(valid, req.body.gameId, req.body.teamId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -351,13 +391,16 @@ app.post('/getDiscardPile', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     game.getDiscardPile(req.body.gameId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -373,13 +416,16 @@ app.post('/getHand', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     game.getHand(valid, req.body.gameId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
@@ -395,13 +441,16 @@ app.post('/getPlayerTurn', function (req, res) {
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
                     game.getPlayerTurn(req.body.gameId, client, res);
+                    done(err);
                 } else {
+                    done(err);
                     res.json({
                         success: false
                     });
                 }
             });
         } else {
+            done(err);
             res.json({
                 success: false
             });
