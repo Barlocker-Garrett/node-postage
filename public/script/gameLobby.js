@@ -58,7 +58,7 @@ function createGame(data) {
             if (data.success == true) {
                 $("#title")[0].value = "";
                 $('input[name=group1]:checked')[0].checked = false;
-                refreshGames(getCreds());
+                console.log("Here");
                 var creds = getCreds();
                 $("html").load("/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId);
             }
