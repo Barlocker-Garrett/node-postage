@@ -1,5 +1,10 @@
-var express = require('express');
+var express = require('express'),
+    http = require('http');
+//make sure you keep this order
 var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+
 var bodyParser = require('body-parser');
 const format = require('pg-format');
 const pool = require('./database.js');
@@ -21,6 +26,21 @@ app.get('/', function (req, res) {
     res.render("./pages/login.ejs");
 });
 
+/*app.get('/', function (req, res) {
+    res.render("./pages/login.ejs");
+});*/
+
+server.listen(3000, function () {
+    console.log('socket.io listening on *:3000');
+});
+
+io.on('connection', function (socket) {
+    console.log('a user connected');
+    socket.on('disconnect', function () {
+        console.log('user disconnected');
+    });
+});
+
 app.get('/gameLobby', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -30,8 +50,9 @@ app.get('/gameLobby', function (req, res) {
                 if (valid == req.query.userId) {
                     var games = null;
                     gameLobby.getListOfGames(client, games, function (error, games) {
-                        console.log(games);
-                        res.render("./pages/gameLobby.ejs", {results:games});
+                        res.render("./pages/gameLobby.ejs", {
+                            results: games
+                        });
                     });
                 } else {
                     res.render("./pages/login.ejs");
@@ -81,7 +102,7 @@ app.post('/login', function (req, res) {
         if (err) throw new Error(err);
         console.log(req.body);
         if (req.body.username != null && req.body.password != null) {
-            account.login(req.body.username, req.body.password, client, res);
+            account.login(req.body.username, req.body.password, client, res, io);
         } else {
             res.json({
                 success: false
@@ -138,14 +159,18 @@ app.get('/getGameSlot', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         var gameId = req.query.gameId;
-        if (req.query.userId != null && req.query.token != null && gameId != null) {
+        var playerId = req.query.playerId;
+        console.log("PlayerId:" + playerId);
+        if (req.query.userId != null && req.query.token != null && gameId != null && playerId != null) {
             var valid = null;
             account.verify(req.query.userId, req.query.token, client, function (error, valid) {
                 if (valid == req.query.userId) {
                     var players = null;
-                    console.log("pre:" + gameId);
                     game.getPlayers(client, gameId, function (error, players) {
-                        res.render("./pages/gameSlot.ejs", {results:players, id:req.query.gameId});
+                        res.render("./pages/gameSlot.ejs", {
+                            results: players,
+                            id: playerId
+                        });
                     });
                 } else {
                     res.render("./pages/login.ejs");
@@ -232,7 +257,9 @@ app.post('/getGames', function (req, res) {
                 if (valid == req.body.userId) {
                     var games = null;
                     gameLobby.getListOfGames(client, games, function (error, games) {
-                        res.render("./partials/games.ejs", {results:games});
+                        res.render("./partials/games.ejs", {
+                            results: games
+                        });
                     });
                 } else {
                     res.render("./pages/login.ejs");
@@ -256,7 +283,9 @@ app.post('/getPlayers', function (req, res) {
                     var players = null;
                     game.getPlayers(client, gameId, function (error, players) {
                         console.log(players);
-                        res.render("./partials/players.ejs", {results:players});
+                        res.render("./partials/players.ejs", {
+                            results: players
+                        });
                     });
                 } else {
                     console.log("Invalid Login");

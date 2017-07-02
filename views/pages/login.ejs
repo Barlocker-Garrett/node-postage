@@ -5,7 +5,11 @@
     <meta charset="utf-8" />
     <title>Sequence Online Board Game</title>
     <% include ../partials/header.ejs %>
-    <script src="/script/login.js"></script>
+        <script src="/script/login.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+        <script>
+            var socket = io();
+        </script>
 </head>
 
 <body>
@@ -14,8 +18,8 @@
         <div class='col s4'></div>
         <div class="col s4 center">
             <div id='login-form'>
-                <input type='text' id='username_field' name='username'/>
-                <input type='password' id='password_field' name='password'/>
+                <input type='text' id='username_field' name='username' placeholder="Username" value="Garrett" />
+                <input type='password' id='password_field' name='password' placeholder="Password" value="password" />
                 <span id="loginRegister" class="blue-text left">Create Account</span>
                 <a id="loginButton" class="waves-effect waves-light btn blue right" name="Login">Login</a>
             </div>

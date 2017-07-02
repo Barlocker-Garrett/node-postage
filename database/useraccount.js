@@ -4,7 +4,7 @@ var rack = hat.rack();
 
 // verify a users token matched with their userId
 // if valid update the lastused to now()
-var verify = function (userId, token, client, callback)  {
+var verify = function (userId, token, client, callback) {
     var valid = null;
     client.query('SELECT id, usersid, token, lastUsed FROM session WHERE usersid = $1 AND token = $2 AND lastUsed > CURRENT_TIMESTAMP - INTERVAL \'2 HOURS\'', [userId, token], (err, result) => {
         if (err) {
@@ -38,17 +38,17 @@ var createAccount = function (username, password, client, _res) {
 }
 
 // login
-var login = function (username, password, client, _res) {
+var login = function (username, password, client, _res, io) {
     client.query('SELECT password, id FROM users WHERE username = $1', [username], (err, result) => {
         if (err) {
             console.log(err);
         } else {
-            processLogin(client, result.rows, password, _res)
+            processLogin(client, result.rows, password, _res, io)
         }
     });
 }
 
-function processLogin(client, rows, password, _res) {
+function processLogin(client, rows, password, _res, io) {
     var valid = false;
     var id = null;
     var token = null;
@@ -62,6 +62,7 @@ function processLogin(client, rows, password, _res) {
         token = createToken(client, id);
     }
     if (valid && token != null && id != null) {
+        console.log("Creating connection");
         _res.json({
             success: valid,
             id: id,

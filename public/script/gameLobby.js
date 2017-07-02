@@ -1,6 +1,7 @@
 $(document).ready(function () {
     $("#logout").click(function () {
         sessionStorage.clear();
+        goToLoginPage();
     });
     $("#CreateGame").click(function () {
         var title = $("#title")[0].value;
@@ -31,6 +32,11 @@ $(document).ready(function () {
         data.gameId = gameId;
         joinGame(data);
     });
+    $("#buttonLeave").click(function () {
+        var data = getCreds();
+        data.playerId = $("#buttonLeave")[0].title;
+        leaveGame(data);
+    });
 });
 
 function getCreds() {
@@ -50,17 +56,17 @@ function createGame(data) {
         url: "/createGame",
         data: JSON.stringify(data),
         contentType: "application/json; charset=utf-8",
-        dataType: "json",
+        dataType: "html",
         success: function (data) {
+            console.log(data);
             if (typeof data != 'object') {
                 data = JSON.parse(data);
             }
             if (data.success == true) {
                 $("#title")[0].value = "";
                 $('input[name=group1]:checked')[0].checked = false;
-                console.log("Here");
                 var creds = getCreds();
-                $("html").load("/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId);
+                window.location.href = "/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId + "&playerId=" + data.playerId;
             }
         },
         failure: function (errMsg) {
@@ -70,6 +76,7 @@ function createGame(data) {
 }
 
 function refreshGames(data) {
+    $("#gamesTable").empty();
     $.ajax({
         type: "POST",
         url: "/getGames",
@@ -77,7 +84,7 @@ function refreshGames(data) {
         contentType: "application/json; charset=utf-8",
         dataType: "html",
         success: function (data) {
-            $("#gamesTable").empty().append(data)
+            $("#gamesTable").append(data);
         },
         failure: function (errMsg) {
             console.log(errMsg);
@@ -108,14 +115,16 @@ function joinGame(data) {
         url: "/joinGame",
         data: JSON.stringify(data),
         contentType: "application/json; charset=utf-8",
-        dataType: "html",
+        dataType: "json",
         success: function (teamData) {
+            console.log(data);
+            console.log(teamData);
             if (typeof teamData != 'object') {
                 teamData = JSON.parse(teamData);
             }
             if (teamData.success == true) {
                 var creds = getCreds();
-                $("html").load("/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId);
+                window.location.href = "/getGameSlot?userId=" + creds.userId + "&token=" + creds.token + "&gameId=" + data.gameId + "&playerId=" + teamData.playerId;
             }
         },
         failure: function (errMsg) {
@@ -125,5 +134,31 @@ function joinGame(data) {
 }
 
 function startGame(data) {
-    $("html").load("/loadGame?userId=" + data.userId + "&token=" + data.token + "&gameId=" + data.gameId);
+    window.location.href = "/loadGame?userId=" + data.userId + "&token=" + data.token + "&gameId=" + data.gameId;
+}
+
+function goToLoginPage() {
+     window.location.href = "/";
+}
+
+function leaveGame(data) {
+    $.ajax({
+        type: "DELETE",
+        url: "/leaveGame",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (leaveData) {
+            if (typeof leaveData != 'object') {
+                leaveData = JSON.parse(leaveData);
+            }
+            if (leaveData.success == true) {
+                var creds = getCreds();
+                window.location.href = "/gameLobby?userId=" + creds.userId + "&token=" + creds.token;
+            }
+        },
+        failure: function (errMsg) {
+            console.log(errMsg);
+        }
+    });
 }

@@ -98,7 +98,7 @@ function goToGameLobby() {
     if (typeof (sessionStorage) !== "undefined") {
         var session = JSON.parse(sessionStorage.getItem("session"));
         if (session.hasOwnProperty("userId") && session.hasOwnProperty("token")) {
-            $("html").load("/gameLobby?userId=" + session.userId + "&token=" + session.token);
+            window.location.href = "/gameLobby?userId=" + session.userId + "&token=" + session.token;
         }
     }
 }

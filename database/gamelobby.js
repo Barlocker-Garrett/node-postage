@@ -28,7 +28,8 @@ var createGame = function (title, playerCount, userId, client, _res) {
                                 gameUrl: url,
                                 teamId: teamId,
                                 teamColor: color,
-                                playerId: playerId
+                                playerId: playerId,
+                                gameId: gameId
                             });
                         } else {
                             _res.json({
