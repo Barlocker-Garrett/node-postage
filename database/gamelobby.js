@@ -6,17 +6,19 @@ var rack = hat.rack();
  */
 var createGame = function (title, playerCount, userId, client, _res) {
     var url = rack();
-    var socket = 5015;
+    var socket = 3000;
+    console.log("createGame Intro");
     client.query('INSERT INTO game(title, url, socket, player_count) VALUES ($1, $2, $3, $4) RETURNING id', [title, url, socket, playerCount], (err, result) => {
         if (err) {
             console.log(err);
         } else if (result.rowCount === 1) {
+            console.log("createGame rowCount" + result.rowCount);
             var gameId = result.rows[0].id;
             var color = "blue";
             client.query('INSERT INTO team(color, game_id) VALUES ($1, $2), ($3, $2) RETURNING id', [color, gameId, "red"], (err, result) => {
                 if (err) {
                     console.log(err);
-                } else if (result.rowCount === playerCount / 2) {
+                } else if (result.rowCount >= 1) {
                     var teamId = result.rows[0].id;
                     client.query('INSERT INTO player(teamid, usersid) VALUES ($1, $2) RETURNING id', [teamId, userId], (err, result) => {
                         if (err) {
@@ -62,6 +64,7 @@ var joinGame = function (gameId, userId, client, _res) {
             var teamId = result.rows[0].teamid;
             var url = result.rows[0].url;
             var color = result.rows[0].color;
+            console.log(result.rows.length);
             if (err) {
                 console.log(err);
             } else if (result.rows.length == player_count) {
@@ -69,7 +72,7 @@ var joinGame = function (gameId, userId, client, _res) {
                     success: false,
                     message: "Game is full"
                 });
-            } else if (result.rows.length == 1) {
+            } else if (result.rows.length == 1 && player_count == 4) {
                 client.query('INSERT INTO player(teamid, usersid) VALUES ($1, $2) RETURNING id', [teamId, userId], (err, result) => {
                     if (err) {
                         console.log(err);
@@ -80,6 +83,27 @@ var joinGame = function (gameId, userId, client, _res) {
                             gameUrl: url,
                             teamId: teamId,
                             teamColor: color,
+                            playerId: playerId
+                        });
+                    } else {
+                        _res.json({
+                            success: false
+                        });
+                    }
+                });
+            } else if (result.rows.length == 1 && player_count == 3) {
+                teamId++;
+                client.query('INSERT INTO player(teamid, usersid) VALUES ($1, $2) RETURNING id', [teamId, userId], (err, result) => {
+                    if (err) {
+                        console.log(err);
+                    } else if (result.rowCount === 1) {
+                        console.log("Green");
+                        var playerId = result.rows[0].id;
+                        _res.json({
+                            success: true,
+                            gameUrl: url,
+                            teamId: teamId,
+                            teamColor: "green",
                             playerId: playerId
                         });
                     } else {
