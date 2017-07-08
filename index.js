@@ -1,7 +1,6 @@
 var express = require('express'),
     http = require('http');
 //make sure you keep this order
-var app = express();
 const socketIO = require('socket.io');
 
 var bodyParser = require('body-parser');
@@ -18,17 +17,15 @@ const server = express()
 
 const io = socketIO(server);
 
-app.set('port', (PORT));
+server.use(express.static(__dirname + '/public'));
 
-app.use(express.static(__dirname + '/public'));
-
-app.use(bodyParser.json());
+server.use(bodyParser.json());
 
 // views is directory for all template files
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+server.set('views', __dirname + '/views');
+server.set('view engine', 'ejs');
 
-app.get('/', function (req, res) {
+server.get('/', function (req, res) {
     res.render("./pages/login.ejs");
 });
 
@@ -63,7 +60,7 @@ gameNSP.on('connection', function (socket) {
 });
 
 // If valid user creds, load the gameLobby page, populate with the list of games to join
-app.get('/gameLobby', function (req, res) {
+server.get('/gameLobby', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.query.userId != null && req.query.token != null) {
@@ -89,7 +86,7 @@ app.get('/gameLobby', function (req, res) {
     });
 });
 
-app.get('/loadGame', function (req, res) {
+server.get('/loadGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         var gameId = req.query.gameId;
@@ -113,7 +110,7 @@ app.get('/loadGame', function (req, res) {
 });
 
 // Allow for people to register for an account
-app.post('/createAccount', function (req, res) {
+server.post('/createAccount', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         console.log(req.body);
@@ -130,7 +127,7 @@ app.post('/createAccount', function (req, res) {
 });
 
 // Check against username and password, if match is found return userId, and session token
-app.post('/login', function (req, res) {
+server.post('/login', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         console.log(req.body);
@@ -147,7 +144,7 @@ app.post('/login', function (req, res) {
 });
 
 // See if they are a valid user if so, let them add a game, emit to all users in game lobby
-app.post('/createGame', function (req, res) {
+server.post('/createGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.title != null && req.body.playerCount != null) {
@@ -175,7 +172,7 @@ app.post('/createGame', function (req, res) {
 });
 
 // See if they are a valid user if so, let them join a game, emit updated game list to all users in game lobby
-app.post('/joinGame', function (req, res) {
+server.post('/joinGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -206,7 +203,7 @@ app.post('/joinGame', function (req, res) {
     });
 });
 
-app.get('/getGameSlot', function (req, res) {
+server.get('/getGameSlot', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         var gameId = req.query.gameId;
@@ -239,7 +236,7 @@ app.get('/getGameSlot', function (req, res) {
 });
 
 // See if they are a valid user if so, let them leave a game, emit games to all users in game lobby, and emit game slots to users in given game
-app.delete('/leaveGame', function (req, res) {
+server.delete('/leaveGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.playerId != null && req.body.gameId != null) {
@@ -271,7 +268,7 @@ app.delete('/leaveGame', function (req, res) {
     });
 });
 
-app.delete('/deleteGame', function (req, res) {
+server.delete('/deleteGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -296,7 +293,7 @@ app.delete('/deleteGame', function (req, res) {
     });
 });
 
-app.post('/startGame', function (req, res) {
+server.post('/startGame', function (req, res) {
     console.log("Hit");
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -322,7 +319,7 @@ app.post('/startGame', function (req, res) {
     });
 });
 
-app.post('/createHand', function (req, res) {
+server.post('/createHand', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -349,7 +346,7 @@ app.post('/createHand', function (req, res) {
 
 // See if they are a valid user if so, let them manually refresh the games list
 // it should stay updated with socket.io this is a fallback
-app.post('/getGames', function (req, res) {
+server.post('/getGames', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null) {
@@ -375,7 +372,7 @@ app.post('/getGames', function (req, res) {
     });
 });
 
-app.post('/getPlayers', function (req, res) {
+server.post('/getPlayers', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         var gameId = req.body.gameId;
@@ -406,7 +403,7 @@ app.post('/getPlayers', function (req, res) {
     });
 });
 
-app.post('/drawCard', function (req, res) {
+server.post('/drawCard', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -431,7 +428,7 @@ app.post('/drawCard', function (req, res) {
     });
 });
 
-app.post('/endTurn', function (req, res) {
+server.post('/endTurn', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null && req.body.teamId != null) {
@@ -456,7 +453,7 @@ app.post('/endTurn', function (req, res) {
     });
 });
 
-app.post('/getDiscardPile', function (req, res) {
+server.post('/getDiscardPile', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -481,7 +478,7 @@ app.post('/getDiscardPile', function (req, res) {
     });
 });
 
-app.post('/getHand', function (req, res) {
+server.post('/getHand', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -506,7 +503,7 @@ app.post('/getHand', function (req, res) {
     });
 });
 
-app.post('/getPlayerTurn', function (req, res) {
+server.post('/getPlayerTurn', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -531,6 +528,6 @@ app.post('/getPlayerTurn', function (req, res) {
     });
 });
 
-app.listen(app.get('port'), function () {
-    console.log('Node app is running on port', app.get('port'));
+server.listen(app.get('port'), function () {
+    console.log('Node app is running on port', PORT);
 });
