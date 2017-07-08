@@ -1,28 +1,25 @@
-var express = require('express'),
-    http = require('http');
-//make sure you keep this order
-const socketIO = require('socket.io');
-const path = require('path');
-const app = express();
-
-var bodyParser = require('body-parser');
 const format = require('pg-format');
 const pool = require('./database.js');
 var account = require('./database/useraccount.js');
 var gameLobby = require('./database/gamelobby.js');
 var game = require('./database/game.js');
 
+const express = require('express');
+const socketIO = require('socket.io');
+const path = require('path');
+const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000;
-const INDEX = path.join(__dirname, '/public');
-const server = express()
-  .use(express.static(INDEX))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+const INDEX = path.join(__dirname, 'index.html');
 
-const io = socketIO(server);
+const app = express();
+var server = app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+app.use(bodyParser.json());       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
 
-//app.set('port', (process.env.PORT || 5000));
-app.use(express.static(__dirname + '/public'));
-app.use(bodyParser.json());
+// Socket.IO
+const io = socketIO.listen(server);
 
 // views is directory for all template files
 app.set('views', __dirname + '/views');
@@ -529,8 +526,4 @@ app.post('/getPlayerTurn', function (req, res) {
             });
         }
     });
-});
-
-app.listen(app.get('port'), function () {
-    console.log('Node app is running on port', 5000);
 });
