@@ -2,8 +2,7 @@ var express = require('express'),
     http = require('http');
 //make sure you keep this order
 var app = express();
-var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+const socketIO = require('socket.io');
 
 var bodyParser = require('body-parser');
 const format = require('pg-format');
@@ -12,7 +11,14 @@ var account = require('./database/useraccount.js');
 var gameLobby = require('./database/gamelobby.js');
 var game = require('./database/game.js');
 
-app.set('port', (process.env.PORT || 3000));
+const PORT = process.env.PORT || 3000;
+const server = express()
+  .use((req, res) => res.sendFile(INDEX) )
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+
+const io = socketIO(server);
+
+app.set('port', (PORT));
 
 app.use(express.static(__dirname + '/public'));
 
@@ -24,10 +30,6 @@ app.set('view engine', 'ejs');
 
 app.get('/', function (req, res) {
     res.render("./pages/login.ejs");
-});
-
-server.listen(process.env.PORT || 3000, function () {
-    console.log('socket.io listening');
 });
 
 // This works since this data needs to be emited across the entire lobby
