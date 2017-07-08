@@ -26,21 +26,41 @@ app.get('/', function (req, res) {
     res.render("./pages/login.ejs");
 });
 
-/*app.get('/', function (req, res) {
-    res.render("./pages/login.ejs");
-});*/
-
 server.listen(3000, function () {
     console.log('socket.io listening on *:3000');
 });
 
-io.on('connection', function (socket) {
-    console.log('a user connected');
+// This works since this data needs to be emited across the entire lobby
+var gameLobbyNSP = io.of('/gameLobby');
+gameLobbyNSP.on('connection', function (socket) {
+    console.log('User joined Game Lobby');
     socket.on('disconnect', function () {
-        console.log('user disconnected');
+        // TODO: remove from any active games
+        console.log('User left Game Lobby');
+    });
+    socket.on('logout', function (creds) {
+        // TODO: remove from any active games
+        console.log('User left Game Lobby');
+        console.log(creds);
     });
 });
 
+// Would be better to use the game URL instead of global loading game namespace, maybe rooms?
+var gameNSP = io.of('/singleGame');
+gameNSP.on('connection', function (socket) {
+    console.log('User in single Game NSP');
+    socket.on('disconnect', function () {
+        // TODO: remove from any active games
+        console.log('User disconnected from single Game NSP');
+    });
+    socket.on('logout', function (creds) {
+        // TODO: remove from any active games
+        console.log('User disconnected from single Game NSP');
+        console.log(creds);
+    });
+});
+
+// If valid user creds, load the gameLobby page, populate with the list of games to join
 app.get('/gameLobby', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -75,6 +95,7 @@ app.get('/loadGame', function (req, res) {
             var valid = null;
             account.verify(req.query.userId, req.query.token, client, function (error, valid) {
                 if (valid == req.query.userId) {
+                    gameNSP.emit("gameStarted",{gameId: gameId});
                     done(err);
                     res.render("./pages/game.ejs", {});
                 } else {
@@ -89,6 +110,7 @@ app.get('/loadGame', function (req, res) {
     });
 });
 
+// Allow for people to register for an account
 app.post('/createAccount', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -105,6 +127,7 @@ app.post('/createAccount', function (req, res) {
     });
 });
 
+// Check against username and password, if match is found return userId, and session token
 app.post('/login', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -121,6 +144,7 @@ app.post('/login', function (req, res) {
     });
 });
 
+// See if they are a valid user if so, let them add a game, emit to all users in game lobby
 app.post('/createGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -128,7 +152,9 @@ app.post('/createGame', function (req, res) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
-                    gameLobby.createGame(req.body.title, req.body.playerCount, valid, client, res);
+                    gameLobby.createGame(req.body.title, req.body.playerCount, valid, client, res, function (err, games) {
+                        gameLobbyNSP.emit('gameList', games);
+                    });
                     done(err);
                 } else {
                     done(err);
@@ -146,6 +172,7 @@ app.post('/createGame', function (req, res) {
     });
 });
 
+// See if they are a valid user if so, let them join a game, emit updated game list to all users in game lobby
 app.post('/joinGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
@@ -153,7 +180,13 @@ app.post('/joinGame', function (req, res) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
-                    gameLobby.joinGame(req.body.gameId, valid, client, res);
+                    gameLobby.joinGame(req.body.gameId, valid, client, res, function (err, games) {
+                        gameLobbyNSP.emit('gameList', games);
+                        var players = null;
+                        game.getPlayers(client, req.body.gameId, function (err, players) {
+                           gameNSP.emit('playerList', players);
+                        });
+                    });
                     done(err);
                 } else {
                     done(err);
@@ -186,7 +219,9 @@ app.get('/getGameSlot', function (req, res) {
                         done(err);
                         res.render("./pages/gameSlot.ejs", {
                             results: players,
-                            id: playerId
+                            id: playerId,
+                            gameId: gameId,
+                            gameName: "Game Title"
                         });
                     });
                 } else {
@@ -201,14 +236,22 @@ app.get('/getGameSlot', function (req, res) {
     });
 });
 
+// See if they are a valid user if so, let them leave a game, emit games to all users in game lobby, and emit game slots to users in given game
 app.delete('/leaveGame', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
-        if (req.body.userId != null && req.body.token != null && req.body.playerId != null) {
+        if (req.body.userId != null && req.body.token != null && req.body.playerId != null && req.body.gameId != null) {
             var valid = null;
             account.verify(req.body.userId, req.body.token, client, function (error, valid) {
                 if (valid != null) {
-                    gameLobby.leaveGame(req.body.playerId, client, res);
+                    gameLobby.leaveGame(req.body.playerId, client, res, function (err, games) {
+                        gameLobbyNSP.emit('gameList', games);
+                        var players = null;
+                        console.log("GameId:" + req.body.gameId);
+                        game.getPlayers(client, req.body.gameId, function (err, players) {
+                           gameNSP.emit('playerList', players);
+                        });
+                    });
                     done(err);
                 } else {
                     done(err);
@@ -252,6 +295,7 @@ app.delete('/deleteGame', function (req, res) {
 });
 
 app.post('/startGame', function (req, res) {
+    console.log("Hit");
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);
         if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -276,6 +320,33 @@ app.post('/startGame', function (req, res) {
     });
 });
 
+app.post('/createHand', function (req, res) {
+    pool.connect(function (err, client, done) {
+        if (err) throw new Error(err);
+        if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+            var valid = null;
+            account.verify(req.body.userId, req.body.token, client, function (error, valid) {
+                if (valid != null) {
+                    gameLobby.createHand(req.body.gameId, client, res);
+                    done(err);
+                } else {
+                    done(err);
+                    res.json({
+                        success: false
+                    });
+                }
+            });
+        } else {
+            done(err);
+            res.json({
+                success: false
+            });
+        }
+    });
+});
+
+// See if they are a valid user if so, let them manually refresh the games list
+// it should stay updated with socket.io this is a fallback
 app.post('/getGames', function (req, res) {
     pool.connect(function (err, client, done) {
         if (err) throw new Error(err);

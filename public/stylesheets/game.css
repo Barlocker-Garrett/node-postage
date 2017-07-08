@@ -14,8 +14,9 @@ body {
 /* 14:9 Ratio */
 
 .card {
-    height: 84px;
-    width: 54px;
+    height: 98px;
+    width: 63px;
+    background-color: transparent  !important;
 }
 
 
@@ -24,8 +25,8 @@ body {
 .card_in_hand {
     height: 140px;
     width: 90px;
-    padding-left: 10px;
-    padding-top: 10px;
+    margin-left: 10px;
+    margin-top: 10px;
 }
 
 #board {
@@ -39,7 +40,7 @@ body {
 
 .row {
     flex-flow: row nowrap;
-    margin-bottom: 0;
+    margin-bottom: -18px !important;
 }
 
 #rules {
@@ -71,7 +72,7 @@ body {
     display: flex;
     flex-flow: row;
     background-color: rgb(255, 255, 255);
-    width: 510px;
+    width: 610px;
     height: 160px;
     border-radius: 5px 5px 0 0;
     border-left: 3px solid #333;
@@ -142,4 +143,36 @@ body {
 .discard_card {
     height: 182px;
     width: 117px;
+}
+
+.available {
+    outline: 2.5px solid lightgreen;
+}
+
+.unavailable {
+    border: 2.5px solid red;
+    border-radius: 15px;
+}
+
+.availableToPlay {
+    border: 2.5px solid lightgreen;
+    border-radius: 15px;
+}
+
+.redToken {
+    width: 63px;
+    height: 63px;
+    border-radius: 50%;
+    margin-bottom: 28px;
+    content:url("../images/Red-circle.svg");
+    box-shadow: none;
+}
+
+.blueToken {
+    width: 63px;
+    height: 63px;
+    border-radius: 50%;
+    margin-bottom: 28px;
+    content:url("../images/Blue_circle.svg");
+    box-shadow: none;
 }

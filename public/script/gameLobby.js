@@ -1,7 +1,11 @@
+var socketLobby = io('/gameLobby');
+
 $(document).ready(function () {
+    var creds = getCreds();
     $("#logout").click(function () {
+        var creds = getCreds();
+        socketLobby.emit('logout', creds);
         sessionStorage.clear();
-        goToLoginPage();
     });
     $("#CreateGame").click(function () {
         var title = $("#title")[0].value;
@@ -10,7 +14,20 @@ $(document).ready(function () {
             var data = getCreds();
             data.playerCount = playerCount;
             data.title = title;
+            //socketLobby.emit('createGame', data);
             createGame(data);
+        }
+    });
+    socketLobby.on('gameList', function(data) {
+        console.log(data);
+        $("#gamesTable").empty();
+        var tr;
+        for (var i = 0; i < data.length; i++) {
+            tr = $('<tr/>');
+            tr.append("<td class='td-value'>" + data[i].title + "</td>");
+            tr.append("<td class='td-value'>" + "(" + data[i].count + "/" + data[i].player_count + ")" + "</td>");
+            tr.append("<td title=" + data[i].id + " class='buttonJoin'><a class='waves-effect waves-light btn white-text blue lighten-2 right'>Join</a></td>");
+            $('#gamesTable').append(tr);
         }
     });
     $("#refreshGames").click(function () {
@@ -43,8 +60,10 @@ function getCreds() {
     var creds = {};
     if (typeof (sessionStorage) !== "undefined") {
         var session = JSON.parse(sessionStorage.getItem("session"));
-        if (session.hasOwnProperty("userId") && session.hasOwnProperty("token")) {
+        if (session && session.hasOwnProperty("userId") && session.hasOwnProperty("token")) {
             creds = session;
+        } else {
+            goToLoginPage();
         }
     }
     return creds;
@@ -138,7 +157,8 @@ function startGame(data) {
 }
 
 function goToLoginPage() {
-     window.location.href = "/";
+    var re = new RegExp(/^.*\//);
+    window.location.href = re.exec(window.location.href);
 }
 
 function leaveGame(data) {

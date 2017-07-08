@@ -181,7 +181,8 @@ var getPlayers = function (client, gameId, callback) {
     // get all of the players and their data for the view
     var players = [];
     console.log("gameId:" + gameId);
-    client.query('SELECT username, teamid, color FROM users JOIN player ON player.usersid = users.id JOIN team ON team.id = player.teamid WHERE team.game_id = $1', [gameId], (err, result) => {
+    client.query('SELECT username, teamid, color FROM users JOIN player ON player.usersid = users.id JOIN team ON team.id = player.teamid WHERE team.game_id = $1'
+                 + 'ORDER BY color', [gameId], (err, result) => {
         if (err) {
             console.log(err);
         } else {
@@ -212,7 +213,7 @@ var getHand = function (userId, gameId, client, _res) {
                     cardIds = new Array();
                     deckIds = new Array();
                     for (var i = 0; i < result.rows.length; i++) {
-                        var card = result.rows[i].value + "_of_" + result.rows[i].suit + "_" + result.rows[i].color;
+                        var card = result.rows[i].value + "_of_" + result.rows[i].suit;
                         cardIds[i] = result.rows[i].cardid;
                         deckIds[i] = result.rows[i].deckid;
                         cards[i] = card;

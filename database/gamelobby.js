@@ -4,7 +4,8 @@ var rack = hat.rack();
 /*
  * Creates a new game, both teams, and inserts the requesting user as a player
  */
-var createGame = function (title, playerCount, userId, client, _res) {
+var createGame = function (title, playerCount, userId, client, _res, callback) {
+    var games = null;
     var url = rack();
     var socket = 3000;
     console.log("createGame Intro");
@@ -25,6 +26,7 @@ var createGame = function (title, playerCount, userId, client, _res) {
                             console.log(err);
                         } else if (result.rowCount === 1) {
                             var playerId = result.rows[0].id;
+                            getListOfGames(client, games, callback);
                             _res.json({
                                 success: true,
                                 gameUrl: url,
@@ -56,7 +58,8 @@ var createGame = function (title, playerCount, userId, client, _res) {
 /*
  * Create new players if there is room on a team within that game  
  */
-var joinGame = function (gameId, userId, client, _res) {
+var joinGame = function (gameId, userId, client, _res, callback) {
+    var games = null;
     client.query('SELECT player.teamid, player.id, team.color, game.title, game.url, game.socket, game.player_count FROM player JOIN team ON player.teamid = team.id' +
         ' JOIN game ON team.game_id = game.id' +
         ' WHERE team.game_id = $1', [gameId], (err, result) => {
@@ -77,6 +80,7 @@ var joinGame = function (gameId, userId, client, _res) {
                     if (err) {
                         console.log(err);
                     } else if (result.rowCount === 1) {
+                        getListOfGames(client, games, callback);
                         var playerId = result.rows[0].id;
                         _res.json({
                             success: true,
@@ -91,12 +95,13 @@ var joinGame = function (gameId, userId, client, _res) {
                         });
                     }
                 });
-            } else if (result.rows.length == 1 && player_count == 3) {
+            } else if (result.rows.length == 2 && player_count == 3) {
                 teamId++;
                 client.query('INSERT INTO player(teamid, usersid) VALUES ($1, $2) RETURNING id', [teamId, userId], (err, result) => {
                     if (err) {
                         console.log(err);
                     } else if (result.rowCount === 1) {
+                        getListOfGames(client, games, callback);
                         console.log("Green");
                         var playerId = result.rows[0].id;
                         _res.json({
@@ -118,6 +123,7 @@ var joinGame = function (gameId, userId, client, _res) {
                     if (err) {
                         console.log(err);
                     } else if (result.rowCount === 1) {
+                        getListOfGames(client, games, callback);
                         var playerId = result.rows[0].id;
                         _res.json({
                             success: true,
@@ -139,11 +145,13 @@ var joinGame = function (gameId, userId, client, _res) {
 /*
  * Remove a given player from a game, by their player id
  */
-var leaveGame = function (playerId, client, _res) {
+var leaveGame = function (playerId, client, _res, callback) {
+    var games = null;
     client.query('DELETE FROM player WHERE (id = $1)', [playerId], (err, result) => {
         if (err) {
             console.log(err);
         } else if (result.rowCount === 1) {
+            getListOfGames(client, games, callback);
             _res.json({
                 success: true
             });
@@ -200,28 +208,29 @@ var startGame = function (gameId, client, _res) {
             if (err) {
                 console.log(err);
             } else if (result.rows[0].count == result.rows[0].player_count) {
-                // create empty 104 empty locations
+                // create empty 100 empty locations
                 var insertLocations = 'INSERT INTO location(playerid, cardid) values(null, null),';
-                for (var i = 0; i < 102; i++) {
+                for (var i = 0; i < 98; i++) {
                     insertLocations += ' (null,null),'
                 }
                 insertLocations += ' (null,null) RETURNING id'
                 client.query(insertLocations, [], (err, result) => {
+                    console.log("Created Locations");
                     if (err) {
                         console.log(err);
-                    } else if (result.rowCount == 104) {
+                    } else if (result.rowCount == 100) {
                         // create the board using the gameId and the just created locations for the board
                         var locationId = result.rows[0].id;
                         var insertBoardLocations = 'INSERT INTO board(id, locationid) values($1, ' + locationId + '),';
-                        for (var i = 0; i < 102; i++) {
+                        for (var i = 0; i < 98; i++) {
                             locationId = result.rows[i + 1].id;
                             insertBoardLocations += ' ($1, ' + locationId + '),';
                         }
-                        insertBoardLocations += ' ($1, ' + result.rows[103].id + ')';
+                        insertBoardLocations += ' ($1, ' + result.rows[99].id + ')';
                         client.query(insertBoardLocations, [gameId], (err, result) => {
                             if (err) {
                                 console.log(err);
-                            } else if (result.rowCount == 104) {
+                            } else if (result.rowCount == 100) {
                                 // create red and blue decks
                                 client.query('INSERT INTO deck(color) VALUES($1), ($2) RETURNING id', ["blue", "red"], (err, result) => {
                                     if (err) {
@@ -247,9 +256,11 @@ var startGame = function (gameId, client, _res) {
                                                     for (let i = 0; i < result.rowCount; i++) {
                                                         playerIds[i] = result.rows[i].id;
                                                     }
+                                                    let m = 0;
                                                     // draw a set number of cards
-                                                    var numCards = 24;
+                                                    var numCards = 6;
                                                     client.query('SELECT cardid, deckid FROM game_deck WHERE gameid = $1 ORDER BY RANDOM() LIMIT $2', [gameId, numCards], (err, result) => {
+                                                        console.log(result);
                                                         if (err) {
                                                             console.log(err);
                                                         } else if (result.rows.length == numCards) {
@@ -261,7 +272,7 @@ var startGame = function (gameId, client, _res) {
                                                             for (var i = 0; i < numCards; i++) {
                                                                 deckIds[i] = result.rows[i].deckid;
                                                             }
-                                                            // delete the 24 cards from game_deck
+                                                            // delete the cards from game_deck
                                                             var deleteCards = 'DELETE FROM game_deck WHERE gameid = $1 AND';
                                                             for (var i = 0; i < numCards - 1; i++) {
                                                                 deleteCards += ' (cardid =' + cardIds[i] + ' AND deckid =' + deckIds[i] + ') OR';
@@ -269,36 +280,37 @@ var startGame = function (gameId, client, _res) {
                                                             deleteCards += ' (cardid =' + cardIds[numCards - 1] + ' AND deckid =' + deckIds[numCards - 1] + ')';
                                                             // create a hand id is the players id
                                                             client.query(deleteCards, [gameId], (err, result) => {
+                                                                console.log(result);
                                                                 if (err) {
                                                                     console.log(err);
                                                                 } else {
-                                                                    var m = 0;
-                                                                    var valid = false;
-                                                                    for (var p = 0; p < numCards; p += 6, m++) {
-                                                                        let playerId = playerIds[m];
-                                                                        var insertHand = 'INSERT INTO hand(id, cardid, deckid) VALUES';
-                                                                        for (var j = p; j < p + 5; j++) {
-                                                                            insertHand += ' ($1,' + cardIds[j] + ', ' + deckIds[j] + '),';
-                                                                        }
-                                                                        insertHand += '($1,' + cardIds[j] + ', ' + deckIds[j] + ')';
-                                                                        client.query(insertHand, [playerId], (err, result) => {
-                                                                            if (err) {
-                                                                                console.log(err);
-                                                                            } else if (result.rowCount == numCards / playerIds.length) {
-                                                                                // update handId for player where hand == null and game id = gameId limit 1
-                                                                                client.query('UPDATE player SET handid = $1 WHERE handid IS NULL AND id = $1', [playerId], (err, result) => {
-                                                                                    if (err) {
-                                                                                        console.log(err);
-                                                                                    } else if (result.rowCount == 1) {
-                                                                                        // TODO: somehow check that these were change then success = true
-                                                                                        // valid = true;
-                                                                                    }
-                                                                                });
-                                                                            }
-                                                                        });
+                                                                    var insertHand = 'INSERT INTO hand(id, cardid, deckid) VALUES';
+                                                                    for (var j = 0; j < numCards - 1; j++) {
+                                                                        insertHand += ' ($1,' + cardIds[j] + ', ' + deckIds[j] + '),';
                                                                     }
-                                                                    _res.json({
-                                                                        success: true
+                                                                    insertHand += '($1,' + cardIds[numCards - 1] + ', ' + deckIds[numCards - 1] + ')';
+                                                                    client.query(insertHand, [playerIds[m]], (err, result) => {
+                                                                        console.log(result);
+                                                                        if (err) {
+                                                                            console.log(err);
+                                                                        } else if (result.rowCount == numCards) {
+                                                                            console.log("\n" + m + "\n");
+                                                                            // update handId for player where hand == null and game id = gameId limit 1
+                                                                            client.query('UPDATE player SET handid = $1 WHERE handid IS NULL AND id = $1', [playerIds[m]], (err, result) => {
+                                                                                console.log(result);
+                                                                                m++;
+                                                                                if (err) {
+                                                                                    console.log(err);
+                                                                                } else if (result.rowCount == 1) {
+                                                                                    console.log("Success!!!");
+                                                                                    _res.json({
+                                                                                        success: true
+                                                                                    });
+                                                                                    // TODO: somehow check that these were change then success = true
+                                                                                    // valid = true;
+                                                                                }
+                                                                            });
+                                                                        }
                                                                     });
                                                                 }
                                                             });
@@ -311,16 +323,79 @@ var startGame = function (gameId, client, _res) {
                                 });
                             }
                         });
+                    }
+                });
+            }
+        });
+}
+
+var createHand = function (gameId, client, _res) {
+    let playerIds = [];
+    client.query('SELECT player.id FROM player JOIN team ON team.id = player.teamid WHERE team.game_id = $1 AND player.handid IS NULL', [gameId], (err, result) => {
+        for (let i = 0; i < result.rowCount; i++) {
+            playerIds[i] = result.rows[i].id;
+        }
+        let m = 0;
+        // draw a set number of cards
+        var numCards = 6;
+        client.query('SELECT cardid, deckid FROM game_deck WHERE gameid = $1 ORDER BY RANDOM() LIMIT $2', [gameId, numCards], (err, result) => {
+            console.log(result);
+            if (err) {
+                console.log(err);
+            } else if (result.rows.length == numCards) {
+                var cardIds = [];
+                var deckIds = [];
+                for (var i = 0; i < numCards; i++) {
+                    cardIds[i] = result.rows[i].cardid;
+                }
+                for (var i = 0; i < numCards; i++) {
+                    deckIds[i] = result.rows[i].deckid;
+                }
+                // delete the cards from game_deck
+                var deleteCards = 'DELETE FROM game_deck WHERE gameid = $1 AND';
+                for (var i = 0; i < numCards - 1; i++) {
+                    deleteCards += ' (cardid =' + cardIds[i] + ' AND deckid =' + deckIds[i] + ') OR';
+                }
+                deleteCards += ' (cardid =' + cardIds[numCards - 1] + ' AND deckid =' + deckIds[numCards - 1] + ')';
+                // create a hand id is the players id
+                client.query(deleteCards, [gameId], (err, result) => {
+                    console.log(result);
+                    if (err) {
+                        console.log(err);
                     } else {
-                        var count = result.rows[0].player_count - result.rows[0].count;
-                        _res.json({
-                            success: false,
-                            message: "Missing " + count + " player(s)"
+                        var insertHand = 'INSERT INTO hand(id, cardid, deckid) VALUES';
+                        for (var j = 0; j < numCards - 1; j++) {
+                            insertHand += ' ($1,' + cardIds[j] + ', ' + deckIds[j] + '),';
+                        }
+                        insertHand += '($1,' + cardIds[numCards - 1] + ', ' + deckIds[numCards - 1] + ')';
+                        client.query(insertHand, [playerIds[m]], (err, result) => {
+                            console.log(result);
+                            if (err) {
+                                console.log(err);
+                            } else if (result.rowCount == numCards) {
+                                console.log("\n" + m + "\n");
+                                // update handId for player where hand == null and game id = gameId limit 1
+                                client.query('UPDATE player SET handid = $1 WHERE handid IS NULL AND id = $1', [playerIds[m]], (err, result) => {
+                                    console.log(result);
+                                    m++;
+                                    if (err) {
+                                        console.log(err);
+                                    } else if (result.rowCount == 1) {
+                                        console.log("Success!!!");
+                                        _res.json({
+                                            success: true
+                                        });
+                                        // TODO: somehow check that these were change then success = true
+                                        // valid = true;
+                                    }
+                                });
+                            }
                         });
                     }
                 });
             }
         });
+    });
 }
 
 /*
@@ -379,3 +454,4 @@ exports.deleteGame = deleteGame;
 exports.startGame = startGame;
 exports.getGames = getGames;
 exports.getListOfGames = getListOfGames;
+exports.createHand = createHand;
