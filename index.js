@@ -12,7 +12,7 @@ var account = require('./database/useraccount.js');
 var gameLobby = require('./database/gamelobby.js');
 var game = require('./database/game.js');
 
-app.set('port', (process.env.PORT || 5000));
+app.set('port', (process.env.PORT || 3000));
 
 app.use(express.static(__dirname + '/public'));
 
@@ -26,8 +26,8 @@ app.get('/', function (req, res) {
     res.render("./pages/login.ejs");
 });
 
-server.listen(3000, function () {
-    console.log('socket.io listening on *:3000');
+server.listen(process.env.PORT || 3000, function () {
+    console.log('socket.io listening');
 });
 
 // This works since this data needs to be emited across the entire lobby
