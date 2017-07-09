@@ -146,6 +146,12 @@ function createHand(data) {
 }
 
 function createBoardMap(boardMap) {
+    var allValidLocations = [];
+    for (var i = 1; i < 100; i++) {
+        if (i != 9 && i != 90 && i != 99) {
+            allValidLocations.push(i);
+        }
+    }
     boardMap.set(2, [63, 85]);
     boardMap.set(3, [64, 86]);
     boardMap.set(4, [65, 87]);
@@ -155,7 +161,7 @@ function createBoardMap(boardMap) {
     boardMap.set(8, [47, 69]);
     boardMap.set(9, [37, 59]);
     boardMap.set(10, [27, 49]);
-    // boardMap.set(11, [, ]); Jack of Clubs 
+    boardMap.set(11, allValidLocations);
     boardMap.set(12, [26, 39]);
     boardMap.set(13, [25, 29]);
     boardMap.set(14, [24, 19]);
@@ -168,7 +174,7 @@ function createBoardMap(boardMap) {
     boardMap.set(21, [3, 62]);
     boardMap.set(22, [4, 52]);
     boardMap.set(23, [5, 42]);
-    // boardMap.set(24, [, ]); Jack of Diamonds
+    boardMap.set(24, allValidLocations);
     boardMap.set(25, [6, 32]);
     boardMap.set(26, [7, 22]);
     boardMap.set(27, [8, 23]);
@@ -205,24 +211,30 @@ function validPlay(card, clickedCard) {
     $('.card_in_hand').removeClass("unavailable");
     $('.card_in_hand').removeClass("availableToPlay");
 
-    if (card.id == 11 || card.id == 24 || card.id == 37 || card.id == 50) {
-        // TODO: Handle the Jacks
-        console.log("You have a Jack");
+    // two eyed Jack
+    if (card.id == 11 || card.id == 24) {
+        console.log("Wild");
+    }
+    // one eyed jack
+    else if (card.id == 37 || card.id == 50) {
+        console.log("Remove");
     }
 
     var locations = boardMap.get(card.id);
-    var noLocations = true;
-    for (var i = 0; i < locations.length; i++) {
-        var selector = "slot" + locations[i];
-        var cardSlot = document.getElementsByClassName(selector)[0];
-        if (!cardSlot.classList.contains("redToken") && !cardSlot.classList.contains("blueToken")) {
-            cardSlot.className += " available";
-            noLocations = false;
+    if (locations) {
+        var noLocations = true;
+        for (var i = 0; i < locations.length; i++) {
+            var selector = "slot" + locations[i];
+            var cardSlot = document.getElementsByClassName(selector)[0];
+            if (!cardSlot.classList.contains("redToken") && !cardSlot.classList.contains("blueToken")) {
+                cardSlot.className += " available";
+                noLocations = false;
+            }
         }
-    }
-    if (noLocations) {
-        clickedCard.className += " unavailable";
-    } else {
-        clickedCard.className += " availableToPlay";
+        if (noLocations) {
+            clickedCard.className += " unavailable";
+        } else {
+            clickedCard.className += " availableToPlay";
+        }
     }
 }

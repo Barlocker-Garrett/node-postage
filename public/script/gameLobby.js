@@ -18,7 +18,7 @@ $(document).ready(function () {
             createGame(data);
         }
     });
-    socketLobby.on('gameList', function(data) {
+    socketLobby.on('gameList', function (data) {
         console.log(data);
         $("#gamesTable").empty();
         var tr;
@@ -29,6 +29,12 @@ $(document).ready(function () {
             tr.append("<td title=" + data[i].id + " class='buttonJoin'><a class='waves-effect waves-light btn white-text blue lighten-2 right'>Join</a></td>");
             $('#gamesTable').append(tr);
         }
+        $(".buttonJoin").click(function () {
+            var gameId = this.title;
+            var data = getCreds();
+            data.gameId = gameId;
+            joinGame(data);
+        });
     });
     $("#refreshGames").click(function () {
         refreshGames(getCreds());
