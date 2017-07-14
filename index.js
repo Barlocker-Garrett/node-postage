@@ -96,8 +96,15 @@ app.get('/loadGame', function (req, res) {
             account.verify(req.query.userId, req.query.token, client, function (error, valid) {
                 if (valid == req.query.userId) {
                     gameNSP.emit("gameStarted",{gameId: gameId});
+                    var players = null;
+                    game.getPlayers(client, gameId, function (error, players) {
+                        done(err);
+                        res.render("./pages/game.ejs", {
+                            results: players,
+                            gameId: gameId
+                        });
+                    });
                     done(err);
-                    res.render("./pages/game.ejs", {});
                 } else {
                     done(err);
                     res.render("./pages/login.ejs");

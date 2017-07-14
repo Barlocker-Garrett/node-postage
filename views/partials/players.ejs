@@ -1,5 +1,5 @@
 <% results.forEach(function(r) { %>
-    <tr>
+    <tr class="<%= r.color %>">
         <td class="td-value">
             <%= r.username %>
         </td>
@@ -8,7 +8,7 @@
         </td>
         <td>
         </td>
-        <td>
+        <td class="turn"  id="<%= r.userId %>">
         </td>
     </tr>
     <% }); %>

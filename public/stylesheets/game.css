@@ -176,3 +176,23 @@ body {
     content:url("../images/Blue_circle.svg");
     box-shadow: none;
 }
+
+.teamTable {
+    margin-top: 15px;
+    border: 2px solid transparent;
+}
+
+tr {
+    border: 2px solid #333;
+}
+
+table {
+    margin-left: 15%;
+    display: block;
+    border-bottom: 2px solid #333;
+}
+
+.turn {
+    font-size: 35px;
+    line-height: 18px;
+}

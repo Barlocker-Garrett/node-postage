@@ -180,8 +180,8 @@ var getDiscardPile = function (gameId, client, _res) {
 var getPlayers = function (client, gameId, callback) {
     // get all of the players and their data for the view
     var players = [];
-    console.log("gameId:" + gameId);
-    client.query('SELECT username, teamid, color FROM users JOIN player ON player.usersid = users.id JOIN team ON team.id = player.teamid WHERE team.game_id = $1'
+    var userIds = [];
+    client.query('SELECT username, teamid, color, usersid FROM users JOIN player ON player.usersid = users.id JOIN team ON team.id = player.teamid WHERE team.game_id = $1'
                  + 'ORDER BY color', [gameId], (err, result) => {
         if (err) {
             console.log(err);
@@ -191,6 +191,7 @@ var getPlayers = function (client, gameId, callback) {
                 player.username = result.rows[i].username;
                 player.teamid = result.rows[i].teamid;
                 player.color = result.rows[i].color;
+                player.userId = result.rows[i].usersid;
                 players.push(player);
             }
             callback(null, players);
@@ -241,13 +242,14 @@ var getHand = function (userId, gameId, client, _res) {
 }
 
 var getPlayerTurn = function (gameId, client, _res) {
-    client.query('SELECT game.player_turnid FROM game WHERE game.id = $1', [gameId], (err, result) => {
+    client.query('SELECT usersid, player.id AS playerId, teamid, handid, color, game_id FROM player JOIN team on team.id = player.teamid WHERE team.game_id = $1 AND player.id IN (SELECT game.player_turnid FROM game WHERE game.id = $1)', [gameId], (err, result) => {
         if (err) {
             console.log(err);
         } else if (result.rows.length > 0) {
             _res.json({
                 success: true,
-                playerId: result.rows[0].player_turnid
+                playerId: result.rows[0].playerId,
+                userId: result.rows[0].usersid
             });
         } else {
             _res.json({

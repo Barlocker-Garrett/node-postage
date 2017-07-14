@@ -10,6 +10,7 @@ $(document).ready(function () {
         creds.gameId = game.gameId;
     }
     getHand(creds);
+    getPlayerTurn(creds);
     $("#toggle_hand").click(function (e) {
         if ($(".select_toggle").hasClass("collapse")) {
             $(".select_toggle").toggleClass("uncollapse");
@@ -137,6 +138,28 @@ function createHand(data) {
         success: function (res) {
             if (res) {
                 getHand(data);
+            }
+        },
+        failure: function (errMsg) {
+            console.log(errMsg);
+        }
+    });
+}
+
+function getPlayerTurn(data) {
+    $.ajax({
+        type: "POST",
+        url: "/getPlayerTurn",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (res) {
+            if (res) {
+                console.log(res);
+                if(res.hasOwnProperty("userId")) {
+                    var selector = "#" + res.userId;
+                    $(selector)[0].innerHTML = "★";
+                }
             }
         },
         failure: function (errMsg) {

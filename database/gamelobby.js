@@ -260,7 +260,6 @@ var startGame = function (gameId, client, _res) {
                                                     // draw a set number of cards
                                                     var numCards = 6;
                                                     client.query('SELECT cardid, deckid FROM game_deck WHERE gameid = $1 ORDER BY RANDOM() LIMIT $2', [gameId, numCards], (err, result) => {
-                                                        console.log(result);
                                                         if (err) {
                                                             console.log(err);
                                                         } else if (result.rows.length == numCards) {
@@ -280,7 +279,6 @@ var startGame = function (gameId, client, _res) {
                                                             deleteCards += ' (cardid =' + cardIds[numCards - 1] + ' AND deckid =' + deckIds[numCards - 1] + ')';
                                                             // create a hand id is the players id
                                                             client.query(deleteCards, [gameId], (err, result) => {
-                                                                console.log(result);
                                                                 if (err) {
                                                                     console.log(err);
                                                                 } else {
@@ -290,11 +288,9 @@ var startGame = function (gameId, client, _res) {
                                                                     }
                                                                     insertHand += '($1,' + cardIds[numCards - 1] + ', ' + deckIds[numCards - 1] + ')';
                                                                     client.query(insertHand, [playerIds[m]], (err, result) => {
-                                                                        console.log(result);
                                                                         if (err) {
                                                                             console.log(err);
                                                                         } else if (result.rowCount == numCards) {
-                                                                            console.log("\n" + m + "\n");
                                                                             // update handId for player where hand == null and game id = gameId limit 1
                                                                             client.query('UPDATE player SET handid = $1 WHERE handid IS NULL AND id = $1', [playerIds[m]], (err, result) => {
                                                                                 console.log(result);
@@ -302,12 +298,17 @@ var startGame = function (gameId, client, _res) {
                                                                                 if (err) {
                                                                                     console.log(err);
                                                                                 } else if (result.rowCount == 1) {
-                                                                                    console.log("Success!!!");
-                                                                                    _res.json({
-                                                                                        success: true
+                                                                                    client.query('UPDATE game SET player_turnid = $1, boardid = $2 WHERE game.id = $3', [playerIds[m], gameId, gameId], (err, result) => {
+                                                                                        console.log(result);
+                                                                                        if (err) {
+                                                                                            console.log(err);
+                                                                                        } else if (result.rowCount == 1) {
+
+                                                                                            _res.json({
+                                                                                                success: true
+                                                                                            });
+                                                                                        }
                                                                                     });
-                                                                                    // TODO: somehow check that these were change then success = true
-                                                                                    // valid = true;
                                                                                 }
                                                                             });
                                                                         }

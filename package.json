@@ -3,7 +3,7 @@
   "version": "0.2.6",
   "description": "A sample Node.js app using Express 4",
   "engines": {
-    "node": "6.10.2"
+    "node": "6.11.1"
   },
   "main": "index.js",
   "scripts": {
@@ -35,5 +35,5 @@
   },
   "homepage": "https://github.com/heroku/node-js-getting-started#readme",
   "devDependencies": {},
-  "author": ""
+  "author": "Garrett"
 }
