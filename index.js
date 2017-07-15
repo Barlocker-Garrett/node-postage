@@ -441,11 +441,13 @@ app.post('/drawCard', function(req, res) {
 app.post('/endTurn', function(req, res) {
   pool.connect(function(err, client, done) {
     if (err) throw new Error(err);
-    if (req.body.userId != null && req.body.token != null && req.body.gameId != null && req.body.teamId != null) {
+    if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
       var valid = null;
       account.verify(req.body.userId, req.body.token, client, function(error, valid) {
         if (valid != null) {
-          game.endTurn(valid, req.body.gameId, req.body.teamId, client, res);
+          game.endTurn(valid, req.body.gameId, client, res, function(err) {
+            gameNSP.emit('playerTurn', err);
+          });
           done(err);
         } else {
           done(err);
@@ -521,6 +523,33 @@ app.post('/getPlayerTurn', function(req, res) {
       account.verify(req.body.userId, req.body.token, client, function(error, valid) {
         if (valid != null) {
           game.getPlayerTurn(req.body.gameId, client, res);
+          done(err);
+        } else {
+          done(err);
+          res.json({
+            success: false
+          });
+        }
+      });
+    } else {
+      done(err);
+      res.json({
+        success: false
+      });
+    }
+  });
+});
+
+app.post('/playCard', function(req, res) {
+  pool.connect(function(err, client, done) {
+    if (err) throw new Error(err);
+    if (req.body.userId != null && req.body.token != null &&
+      req.body.location != null && req.body.card != null &&
+      req.body.gameId != null) {
+      var valid = null;
+      account.verify(req.body.userId, req.body.token, client, function(error, valid) {
+        if (valid != null) {
+          game.placeToken(req.body.userId, req.body.gameId, req.body.card.id, req.body.location, req.body.card.deckId, client, res);
           done(err);
         } else {
           done(err);

@@ -83,27 +83,32 @@ var drawCard = function(userId, gameId, client, _res) {
   });
 };
 
-var endTurn = function(userId, gameId, teamId, client, _res) {
+var endTurn = function(userId, gameId, client, _res, callback) {
   // if your turn
-  client.query('select player.id from users join player on player.usersid = users.id join team on team.id = player.teamid join game on team.game_id = game.id where game.id = $1 and users.id = $2', [gameId, userId], (err, result) => {
+  client.query('select player.id, player.teamid from users join player on player.usersid = users.id join team on team.id = player.teamid join game on team.game_id = game.id where game.id = $1 and users.id = $2', [gameId, userId], (err, result) => {
     if (err) {
       console.log(err);
     } else if (result.rows.length === 1) {
       var playerId = result.rows[0].id;
-      client.query('select game.id from game where player_turnid = $1', [playerId], (err, result) => {
+      var teamId = result.rows[0].teamid;
+      console.log(playerId, teamId);
+      client.query('select game.id from game where player_turnid = $1 and id = $2', [playerId, gameId], (err, result) => {
         if (err) {
           console.log(err);
         } else if (result.rows.length === 1) {
-          client.query('select player.id from player join team on team.id = player.teamid where teamid != $2 and game_id = $1 and player.id NOT IN (select game.last_player_id from game where id = $1)', [gameId, teamId], (err, result) => {
+          // if num players is 4 then use the following
+          //  and player.id NOT IN (select game.last_player_id from game where id = $1) MORE THAN 2 PLAYERS
+          client.query('select player.id from player join team on team.id = player.teamid where teamid != $2 and game_id = $1', [gameId, teamId], (err, result) => {
             if (err) {
               console.log(err);
             } else if (result.rows.length > 0) {
               var nextPlayer = result.rows[0].id;
               // update last_player_id, player_turnid, and reset player_draw = false
-              client.query('UPDATE game SET last_player_id = $1, player_turnid = $2, player_draw = false WHERE game.id = $3', [playerId, nextPlayer, gameId], (err, result) => {
+              client.query('UPDATE game SET last_player_id = $1, player_turnid = $2, player_draw = false, played_card = false WHERE game.id = $3', [playerId, nextPlayer, gameId], (err, result) => {
                 if (err) {
                   console.log(err);
                 } else if (result.rowCount == 1) {
+                  callback(null);
                   _res.json({
                     success: true
                   });
@@ -259,262 +264,281 @@ var getPlayerTurn = function(gameId, client, _res) {
   });
 };
 
-var placeToken = function(userId, gameId, cardId, locationId, client, _res) {
+var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _res) {
+  console.log(gameId, userId, cardId, locationId, deckId);
   // get the players id, and verify they have that card
   client.query('select player.id from users join player on player.usersid = users.id join team on team.id = player.teamid join game on team.game_id = game.id join hand on hand.id = player.handid where game.id = $1 and users.id = $2 AND hand.cardid = $3', [gameId, userId, cardId], (err, result) => {
     if (err) {
       console.log(err);
     } else if (result.rows.length == 1) {
       var playerId = result.rows[0].id;
-      client.query('select locationid, location.playerid, cardid  from location join board on board.locationid = location.id join game on game.boardid = board.id where game.id = $1', [gameId], (err, result) => {
+      client.query('SELECT * FROM game WHERE id =$1 AND player_turnid = $2 AND played_card = false', [gameId, playerId], (err, result) => {
         if (err) {
           console.log(err);
-        } else if (result.rows.length == 104) {
-          var playedPlayerId = result.rows[locationId].playerid;
-          var playedCardId = result.rows[locationId].cardid;
-          var matches = false;
-          var jack = false;
-          var eye = null;
-          if (locationId == 1 || locationId == 73) {
-            if (cardId == 19) {
-              matches = true;
-            }
-          } else if (locationId == 2 || locationId == 72) {
-            if (cardId == 20) {
-              matches = true;
-            }
-          } else if (locationId == 3 || locationId == 62) {
-            if (cardId == 21) {
-              matches = true;
-            }
-          } else if (locationId == 4 || locationId == 52) {
-            if (cardId == 22) {
-              matches = true;
-            }
-          } else if (locationId == 5 || locationId == 42) {
-            if (cardId == 23) {
-              matches = true;
-            }
-          } else if (locationId == 6 || locationId == 32) {
-            if (cardId == 25) {
-              matches = true;
-            }
-          } else if (locationId == 7 || locationId == 22) {
-            if (cardId == 26) {
-              matches = true;
-            }
-          } else if (locationId == 8 || locationId == 23) {
-            if (cardId == 27) {
-              matches = true;
-            }
-          } else if (locationId == 10 || locationId == 74) {
-            if (cardId == 18) {
-              matches = true;
-            }
-          } else if (locationId == 11 || locationId == 44) {
-            if (cardId == 29) {
-              matches = true;
-            }
-          } else if (locationId == 12 || locationId == 45) {
-            if (cardId == 28) {
-              matches = true;
-            }
-          } else if (locationId == 13 || locationId == 98) {
-            if (cardId == 41) {
-              matches = true;
-            }
-          } else if (locationId == 14 || locationId == 97) {
-            if (cardId == 42) {
-              matches = true;
-            }
-          } else if (locationId == 15 || locationId == 96) {
-            if (cardId == 43) {
-              matches = true;
-            }
-          } else if (locationId == 16 || locationId == 95) {
-            if (cardId == 44) {
-              matches = true;
-            }
-          } else if (locationId == 17 || locationId == 94) {
-            if (cardId == 45) {
-              matches = true;
-            }
-          } else if (locationId == 18 || locationId == 93) {
-            if (cardId == 46) {
-              matches = true;
-            }
-          } else if (locationId == 19 || locationId == 24) {
-            if (cardId == 14) {
-              matches = true;
-            }
-          } else if (locationId == 20 || locationId == 75) {
-            if (cardId == 17) {
-              matches = true;
-            }
-          } else if (locationId == 21 || locationId == 54) {
-            if (cardId == 30) {
-              matches = true;
-            }
-          } else if (locationId == 25 || locationId == 29) {
-            if (cardId == 13) {
-              matches = true;
-            }
-          } else if (locationId == 26 || locationId == 39) {
-            if (cardId == 12) {
-              matches = true;
-            }
-          } else if (locationId == 27 || locationId == 48) {
-            if (cardId == 10) {
-              matches = true;
-            }
-          } else if (locationId == 28 || locationId == 92) {
-            if (cardId == 47) {
-              matches = true;
-            }
-          } else if (locationId == 30 || locationId == 76) {
-            if (cardId == 16) {
-              matches = true;
-            }
-          } else if (locationId == 31 || locationId == 55) {
-            if (cardId == 31) {
-              matches = true;
-            }
-          } else if (locationId == 33 || locationId == 82) {
-            if (cardId == 38) {
-              matches = true;
-            }
-          } else if (locationId == 34 || locationId == 81) {
-            if (cardId == 36) {
-              matches = true;
-            }
-          } else if (locationId == 35 || locationId == 71) {
-            if (cardId == 35) {
-              matches = true;
-            }
-          } else if (locationId == 36 || locationId == 61) {
-            if (cardId == 34) {
-              matches = true;
-            }
-          } else if (locationId == 37 || locationId == 59) {
-            if (cardId == 9) {
-              matches = true;
-            }
-          } else if (locationId == 38 || locationId == 91) {
-            if (cardId == 48) {
-              matches = true;
-            }
-          } else if (locationId == 40 || locationId == 77) {
-            if (cardId == 15) {
-              matches = true;
-            }
-          } else if (locationId == 41 || locationId == 56) {
-            if (cardId == 32) {
-              matches = true;
-            }
-          } else if (locationId == 43 || locationId == 83) {
-            if (cardId == 39) {
-              matches = true;
-            }
-          } else if (locationId == 46 || locationId == 51) {
-            if (cardId == 33) {
-              matches = true;
-            }
-          } else if (locationId == 47 || locationId == 69) {
-            if (cardId == 8) {
-              matches = true;
-            }
-          } else if (locationId == 48 || locationId == 80) {
-            if (cardId == 49) {
-              matches = true;
-            }
-          } else if (locationId == 50 || locationId == 78) {
-            if (cardId == 53) {
-              matches = true;
-            }
-          } else if (locationId == 53 || locationId == 84) {
-            if (cardId == 40) {
-              matches = true;
-            }
-          } else if (locationId == 57 || locationId == 79) {
-            if (cardId == 7) {
-              matches = true;
-            }
-          } else if (locationId == 58 || locationId == 70) {
-            if (cardId == 51) {
-              matches = true;
-            }
-          } else if (locationId == 60 || locationId == 68) {
-            if (cardId == 52) {
-              matches = true;
-            }
-          } else if (locationId == 63 || locationId == 85) {
-            if (cardId == 2) {
-              matches = true;
-            }
-          } else if (locationId == 64 || locationId == 86) {
-            if (cardId == 3) {
-              matches = true;
-            }
-          } else if (locationId == 65 || locationId == 87) {
-            if (cardId == 4) {
-              matches = true;
-            }
-          } else if (locationId == 66 || locationId == 88) {
-            if (cardId == 5) {
-              matches = true;
-            }
-          } else if (locationId == 67 || locationId == 89) {
-            if (cardId == 6) {
-              matches = true;
-            }
-          } else if (cardId == 11 || cardId == 24) {
-            jack = true;
-            eye = 2;
-          } else if (cardId == 37 || cardId == 50) {
-            jack = true;
-            eye = 1;
-          }
+        } else if (result.rows.length == 1) {
+          // this will be 1 if it is the players turn
+          client.query('select locationid, location.playerid, cardid  from location join board on board.locationid = location.id join game on game.boardid = board.id where game.id = $1', [gameId], (err, result) => {
+            console.log(result.rows.length);
+            if (err) {
+              console.log(err);
+            } else if (result.rows.length == 100) {
+              var playedPlayerId = result.rows[locationId].playerid;
+              var playedCardId = result.rows[locationId].cardid;
+              var matches = false;
+              var jack = false;
+              var eye = null;
+              if (locationId == 1 || locationId == 73) {
+                if (cardId == 19) {
+                  matches = true;
+                }
+              } else if (locationId == 2 || locationId == 72) {
+                if (cardId == 20) {
+                  matches = true;
+                }
+              } else if (locationId == 3 || locationId == 62) {
+                if (cardId == 21) {
+                  matches = true;
+                }
+              } else if (locationId == 4 || locationId == 52) {
+                if (cardId == 22) {
+                  matches = true;
+                }
+              } else if (locationId == 5 || locationId == 42) {
+                if (cardId == 23) {
+                  matches = true;
+                }
+              } else if (locationId == 6 || locationId == 32) {
+                if (cardId == 25) {
+                  matches = true;
+                }
+              } else if (locationId == 7 || locationId == 22) {
+                if (cardId == 26) {
+                  matches = true;
+                }
+              } else if (locationId == 8 || locationId == 23) {
+                if (cardId == 27) {
+                  matches = true;
+                }
+              } else if (locationId == 10 || locationId == 74) {
+                if (cardId == 18) {
+                  matches = true;
+                }
+              } else if (locationId == 11 || locationId == 44) {
+                if (cardId == 29) {
+                  matches = true;
+                }
+              } else if (locationId == 12 || locationId == 45) {
+                if (cardId == 28) {
+                  matches = true;
+                }
+              } else if (locationId == 13 || locationId == 98) {
+                if (cardId == 41) {
+                  matches = true;
+                }
+              } else if (locationId == 14 || locationId == 97) {
+                if (cardId == 42) {
+                  matches = true;
+                }
+              } else if (locationId == 15 || locationId == 96) {
+                if (cardId == 43) {
+                  matches = true;
+                }
+              } else if (locationId == 16 || locationId == 95) {
+                if (cardId == 44) {
+                  matches = true;
+                }
+              } else if (locationId == 17 || locationId == 94) {
+                if (cardId == 45) {
+                  matches = true;
+                }
+              } else if (locationId == 18 || locationId == 93) {
+                if (cardId == 46) {
+                  matches = true;
+                }
+              } else if (locationId == 19 || locationId == 24) {
+                if (cardId == 14) {
+                  matches = true;
+                }
+              } else if (locationId == 20 || locationId == 75) {
+                if (cardId == 17) {
+                  matches = true;
+                }
+              } else if (locationId == 21 || locationId == 54) {
+                if (cardId == 30) {
+                  matches = true;
+                }
+              } else if (locationId == 25 || locationId == 29) {
+                if (cardId == 13) {
+                  matches = true;
+                }
+              } else if (locationId == 26 || locationId == 39) {
+                if (cardId == 12) {
+                  matches = true;
+                }
+              } else if (locationId == 27 || locationId == 48) {
+                if (cardId == 10) {
+                  matches = true;
+                }
+              } else if (locationId == 28 || locationId == 92) {
+                if (cardId == 47) {
+                  matches = true;
+                }
+              } else if (locationId == 30 || locationId == 76) {
+                if (cardId == 16) {
+                  matches = true;
+                }
+              } else if (locationId == 31 || locationId == 55) {
+                if (cardId == 31) {
+                  matches = true;
+                }
+              } else if (locationId == 33 || locationId == 82) {
+                if (cardId == 38) {
+                  matches = true;
+                }
+              } else if (locationId == 34 || locationId == 81) {
+                if (cardId == 36) {
+                  matches = true;
+                }
+              } else if (locationId == 35 || locationId == 71) {
+                if (cardId == 35) {
+                  matches = true;
+                }
+              } else if (locationId == 36 || locationId == 61) {
+                if (cardId == 34) {
+                  matches = true;
+                }
+              } else if (locationId == 37 || locationId == 59) {
+                if (cardId == 9) {
+                  matches = true;
+                }
+              } else if (locationId == 38 || locationId == 91) {
+                if (cardId == 48) {
+                  matches = true;
+                }
+              } else if (locationId == 40 || locationId == 77) {
+                if (cardId == 15) {
+                  matches = true;
+                }
+              } else if (locationId == 41 || locationId == 56) {
+                if (cardId == 32) {
+                  matches = true;
+                }
+              } else if (locationId == 43 || locationId == 83) {
+                if (cardId == 39) {
+                  matches = true;
+                }
+              } else if (locationId == 46 || locationId == 51) {
+                if (cardId == 33) {
+                  matches = true;
+                }
+              } else if (locationId == 47 || locationId == 69) {
+                if (cardId == 8) {
+                  matches = true;
+                }
+              } else if (locationId == 48 || locationId == 80) {
+                if (cardId == 49) {
+                  matches = true;
+                }
+              } else if (locationId == 50 || locationId == 78) {
+                if (cardId == 53) {
+                  matches = true;
+                }
+              } else if (locationId == 53 || locationId == 84) {
+                if (cardId == 40) {
+                  matches = true;
+                }
+              } else if (locationId == 57 || locationId == 79) {
+                if (cardId == 7) {
+                  matches = true;
+                }
+              } else if (locationId == 58 || locationId == 70) {
+                if (cardId == 51) {
+                  matches = true;
+                }
+              } else if (locationId == 60 || locationId == 68) {
+                if (cardId == 52) {
+                  matches = true;
+                }
+              } else if (locationId == 63 || locationId == 85) {
+                if (cardId == 2) {
+                  matches = true;
+                }
+              } else if (locationId == 64 || locationId == 86) {
+                if (cardId == 3) {
+                  matches = true;
+                }
+              } else if (locationId == 65 || locationId == 87) {
+                if (cardId == 4) {
+                  matches = true;
+                }
+              } else if (locationId == 66 || locationId == 88) {
+                if (cardId == 5) {
+                  matches = true;
+                }
+              } else if (locationId == 67 || locationId == 89) {
+                if (cardId == 6) {
+                  matches = true;
+                }
+              } else if (cardId == 11 || cardId == 24) {
+                jack = true;
+                eye = 2;
+              } else if (cardId == 37 || cardId == 50) {
+                jack = true;
+                eye = 1;
+              }
 
-          // Insert the token onto this slot
-          // TODO: check for sequences
-          if (match == true && playedPlayerId == null && playedCardId == null) {
-            client.query('UPDATE location SET playerid = $1, cardid = $2', [playerId, cardId], (err, result) => {
-              if (err) {
-                console.log(err);
-              } else if (result.rowCount == 1) {
-                // remove card from Hand
-                // add card to discard
+              // TODO: check for sequences
+              // Insert the token onto this slot
+              if (matches == true && playedPlayerId == null && playedCardId == null) {
+                client.query('INSERT INTO location (id, cardid, playerid) VALUES ($1,$2,$3)', [locationId, cardId, playerId], (err, result) => {
+                  console.log(result);
+                  if (err) {
+                    console.log(err);
+                  } else if (result.rowCount == 1) {
+                    // mark that the user has played a card this turn
+                    userPlayedCard(client, gameId, playerId);
+                    // remove card from Hand
+                    removeCardFromHand(client, cardId, deckId, playerId);
+                    // add card to discard
+                    addCardToDiscard(client, cardId, deckId, gameId);
+                    _res.json({
+                      success: true
+                    });
+                  }
+                });
+              } else if (jack == true && eye == 1) {
+                // if locationid is not part of a sequence, remove token
+                // if valid remove card from hand
+                // then add card to discard
+              } else if (jack == true && eye == 2) {
+                client.query('UPDATE location SET playerid = $1, cardid = $2', [playerId, cardId], (err, result) => {
+                  if (err) {
+                    console.log(err);
+                  } else if (result.rowCount == 1) {
+                    // remove card from Hand
+                    // add card to discard
+                    _res.json({
+                      success: true
+                    });
+                  }
+                });
+              } else {
                 _res.json({
-                  success: true
+                  success: false,
+                  message: "Unknown location, or free space"
                 });
               }
-            });
-          } else if (jack == true && eye == 1) {
-            // if locationid is not part of a sequence, remove token
-            // if valid remove card from hand
-            // then add card to discard
-          } else if (jack == true && eye == 2) {
-            client.query('UPDATE location SET playerid = $1, cardid = $2', [playerId, cardId], (err, result) => {
-              if (err) {
-                console.log(err);
-              } else if (result.rowCount == 1) {
-                // remove card from Hand
-                // add card to discard
-                _res.json({
-                  success: true
-                });
-              }
-            });
-          } else {
-            _res.json({
-              success: false,
-              message: "Unknown location, or free space"
-            });
-          }
+            } else {
+              _res.json({
+                success: false,
+                message: "There are not 100 locations on this board for some reason"
+              });
+            }
+          });
         } else {
           _res.json({
             success: false,
-            message: "Unable to verify you have that card, or that you are playing the game"
+            message: "Unable to verify that it is your turn"
           });
         }
       });
@@ -527,6 +551,44 @@ var placeToken = function(userId, gameId, cardId, locationId, client, _res) {
   });
 };
 
+function removeCardFromHand(client, cardId, deckId, playerId) {
+  client.query('DELETE FROM hand WHERE cardid = $1 AND deckid = $2 and id = $3', [cardId, deckId, playerId], (err, result) => {
+    console.log(result);
+    if (err) {
+      console.log(err);
+    } else if (result.rowCount == 1) {
+      // TODO: emit hand to this user
+    } else {
+      console.log(result);
+    }
+  });
+}
+
+function addCardToDiscard(client, cardId, deckId, gameId) {
+  client.query('INSERT INTO discard (gameid, cardid, deckid) VALUES ($1, $2, $3)', [gameId, cardId, deckId], (err, result) => {
+    console.log(result);
+    if (err) {
+      console.log(err);
+    } else if (result.rowCount == 1) {
+      // TODO: broadcast for each user to get the discard pile
+    } else {
+      console.log(result);
+    }
+  });
+}
+
+function userPlayedCard(client, gameId, playerId) {
+  client.query('UPDATE game SET played_card = true WHERE id = $1 AND player_turnid = $2', [gameId, playerId], (err, result) => {
+    console.log(result);
+    if (err) {
+      console.log(err);
+    } else if (result.rowCount == 1) {
+      // TODO: chain these events and make them commit only if they are all successful somehow
+    } else {
+      console.log(result);
+    }
+  });
+}
 
 exports.drawCard = drawCard;
 exports.endTurn = endTurn;
@@ -534,6 +596,7 @@ exports.getDiscardPile = getDiscardPile;
 exports.getPlayers = getPlayers;
 exports.getHand = getHand;
 exports.getPlayerTurn = getPlayerTurn;
+exports.placeToken = placeToken;
 
 // placeToken POST
 

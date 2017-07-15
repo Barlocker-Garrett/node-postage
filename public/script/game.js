@@ -4,11 +4,6 @@ var boardMap = new Map();
 
 $(document).ready(function() {
   var creds = getCreds();
-  game = getGame();
-  createBoardMap(boardMap);
-  if (game.hasOwnProperty("gameId")) {
-    creds.gameId = game.gameId;
-  }
   getHand(creds);
   getPlayerTurn(creds);
   $("#toggle_hand").click(function(e) {
@@ -42,6 +37,10 @@ $(document).ready(function() {
       $('#playersTable').append(tr);
     }
   });
+  socketLobby.on('playerTurn', function(data) {
+    $('.turn').html("");
+    getPlayerTurn(getCreds());
+  });
   $("#refreshPlayers").click(function() {
     var data = getCreds();
     data.gameId = $("#buttonLeave")[0].title;
@@ -50,6 +49,25 @@ $(document).ready(function() {
   $('.card_in_hand').click(function() {
     var card = JSON.parse(this.alt);
     validPlay(card, this);
+  });
+  $('.card').click(function() {
+    var slot = '.' + this.classList[1];
+    var available = $(slot).hasClass("available");
+    if (available) {
+      var data = getCreds();
+      data.location = this.classList[1].slice(4);
+      data.card = JSON.parse($('.availableToPlay').attr("alt"));
+      data.gameId = game.gameId;
+      playACard(data);
+    }
+  });
+  $('#deck').click(function() {
+    var data = getCreds();
+    drawCard(data);
+  });
+  $("#endTurn").click(function() {
+    var data = getCreds();
+    endTurn(data);
   });
 });
 
@@ -72,6 +90,11 @@ function getCreds() {
     var session = JSON.parse(sessionStorage.getItem("session"));
     if (session && session.hasOwnProperty("userId") && session.hasOwnProperty("token")) {
       creds = session;
+      game = getGame();
+      createBoardMap(boardMap);
+      if (game.hasOwnProperty("gameId")) {
+        creds.gameId = game.gameId;
+      }
     } else {
       goToLoginPage();
     }
@@ -113,11 +136,13 @@ function getHand(data) {
         createHand(data);
       } else {
         console.log(res);
-        $('#hand').css('width', (res.cards.length + 1) * 87 + "px");
-        for (var i = 0; i < res.cards.length; i++) {
-          if ($('.card_in_hand')[i]) {
+        $('#hand').css('width', (7) * 87 + "px");
+        for (var i = 0; i < res.cards.length || i < 6; i++) {
+          if ($('.card_in_hand')[i] && res.cards[i]) {
             $('.card_in_hand')[i].src = "/images/" + res.cards[i] + ".svg";
             $('.card_in_hand')[i].alt = "{\"id\":" + res.cardIds[i] + ",\"deckId\":" + res.deckIds[i] + "}";
+          } else {
+            $('.card_in_hand')[i].src = "/images/card_back_blue.svg";
           }
         }
       }
@@ -159,6 +184,29 @@ function getPlayerTurn(data) {
         if (res.hasOwnProperty("userId")) {
           var selector = "#" + res.userId;
           $(selector)[0].innerHTML = "★";
+        }
+      }
+    },
+    failure: function(errMsg) {
+      console.log(errMsg);
+    }
+  });
+}
+
+function playACard(data) {
+  $.ajax({
+    type: "POST",
+    url: "/playCard",
+    data: JSON.stringify(data),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function(res) {
+      if (res) {
+        console.log(res);
+        if (res.hasOwnProperty("success")) {
+          getHand(getCreds());
+          // TODO: deselect items on board, and item in hand
+          console.log(res.success);
         }
       }
     },
@@ -260,4 +308,49 @@ function validPlay(card, clickedCard) {
       clickedCard.className += " availableToPlay";
     }
   }
+}
+
+function drawCard(data) {
+  $.ajax({
+    type: "POST",
+    url: "/drawCard",
+    data: JSON.stringify(data),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function(res) {
+      if (res) {
+        console.log(res);
+        if (res.hasOwnProperty("success")) {
+          getHand(getCreds());
+          // TODO: deselect items on board, and item in hand
+          console.log(res.success);
+        }
+      }
+    },
+    failure: function(errMsg) {
+      console.log(errMsg);
+    }
+  });
+}
+
+function endTurn(data) {
+  $.ajax({
+    type: "POST",
+    url: "/endTurn",
+    data: JSON.stringify(data),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function(res) {
+      if (res) {
+        console.log(res);
+        if (res.hasOwnProperty("success")) {
+          // TODO: update player list
+          console.log(res.success);
+        }
+      }
+    },
+    failure: function(errMsg) {
+      console.log(errMsg);
+    }
+  });
 }
