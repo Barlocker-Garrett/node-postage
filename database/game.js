@@ -15,10 +15,13 @@ var drawCard = function(userId, gameId, client, _res) {
               console.log(err);
             } else if (result.rows[0].count < 6) {
               // find a card
-              client.query('SELECT deckid, cardid FROM game_deck WHERE gameid = $1 ORDER BY RANDOM() LIMIT 1', [gameId], (err, result) => {
+              client.query('SELECT deckid, cardid FROM game_deck WHERE gameid = $1 ORDER BY RANDOM()', [gameId], (err, result) => {
                 if (err) {
                   console.log(err);
-                } else if (result.rows.length == 1) {
+                } else if (result.rows.length >= 1) {
+                  if (result.rows.length <= 1) {
+                    resetDecks(client, gameId);
+                  }
                   // insert the card into your hand
                   var cardId = result.rows[0].cardid;
                   var deckId = result.rows[0].deckid;
@@ -56,8 +59,6 @@ var drawCard = function(userId, gameId, client, _res) {
                       });
                     }
                   });
-                } else {
-                  // TODO: maybe resuffle if empty
                 }
               });
             } else {
@@ -83,6 +84,34 @@ var drawCard = function(userId, gameId, client, _res) {
   });
 };
 
+function resetDecks(client, gameId) {
+  // create red and blue decks
+  client.query('INSERT INTO deck(color) VALUES($1), ($2) RETURNING id', ["blue", "red"], (err, result) => {
+    if (err) {
+      console.log(err);
+    } else if (result.rowCount == 2) {
+      // place all 104 cards in game_deck
+      var blueDeck = result.rows[0].id;
+      var redDeck = result.rows[1].id;
+      var insertGameDecks = 'INSERT INTO game_deck (deckid, cardid, gameid) VALUES';
+      for (var i = 2; i < 54; i++) {
+        insertGameDecks += ' ($1, ' + i + ', $3),';
+      }
+      for (var j = 2; j < 53; j++) {
+        insertGameDecks += ' ($2, ' + j + ', $3),';
+      }
+      insertGameDecks += ' ($2, 53, $3)';
+      client.query(insertGameDecks, [blueDeck, redDeck, gameId], (err, result) => {
+        if (err) {
+          console.log(err);
+        } else if (result.rowCount == 104) {
+          console.log("New set of decks/cards created");
+        }
+      });
+    }
+  });
+}
+
 var endTurn = function(userId, gameId, client, _res, callback) {
   // if your turn
   client.query('select player.id, player.teamid from users join player on player.usersid = users.id join team on team.id = player.teamid join game on team.game_id = game.id where game.id = $1 and users.id = $2', [gameId, userId], (err, result) => {
@@ -91,14 +120,19 @@ var endTurn = function(userId, gameId, client, _res, callback) {
     } else if (result.rows.length === 1) {
       var playerId = result.rows[0].id;
       var teamId = result.rows[0].teamid;
-      console.log(playerId, teamId);
-      client.query('select game.id from game where player_turnid = $1 and id = $2', [playerId, gameId], (err, result) => {
+      // console.log(playerId, teamId);
+      client.query('select game.id, game.player_count from game where player_turnid = $1 and id = $2', [playerId, gameId], (err, result) => {
         if (err) {
           console.log(err);
         } else if (result.rows.length === 1) {
+          var numPlayers = result.rows[0].player_count;
           // if num players is 4 then use the following
           //  and player.id NOT IN (select game.last_player_id from game where id = $1) MORE THAN 2 PLAYERS
-          client.query('select player.id from player join team on team.id = player.teamid where teamid != $2 and game_id = $1', [gameId, teamId], (err, result) => {
+          var getNextPlayerQuery = "SELECT player.id FROM player JOIN team ON team.id = player.teamid WHERE teamid != $2 AND game_id = $1";
+          if (numPlayers == 4) {
+            getNextPlayerQuery += " AND player.id NOT IN (SELECT game.last_player_id FROM game WHERE id = $1)";
+          }
+          client.query(getNextPlayerQuery, [gameId, teamId], (err, result) => {
             if (err) {
               console.log(err);
             } else if (result.rows.length > 0) {
@@ -151,7 +185,7 @@ var getDiscardPile = function(gameId, client, _res) {
     } else if (result.rows.length === 1) {
       _res.json({
         success: true,
-        card: result.rows[0].value + "_of_" + result.rows[0].suit + "_" + result.rows[0].color,
+        card: result.rows[0].value + "_of_" + result.rows[0].suit,
         count: result.rows[0].count
       });
     } else {
@@ -264,30 +298,35 @@ var getPlayerTurn = function(gameId, client, _res) {
   });
 };
 
-var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _res) {
-  console.log(gameId, userId, cardId, locationId, deckId);
+var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _res, callback) {
   // get the players id, and verify they have that card
   client.query('select player.id from users join player on player.usersid = users.id join team on team.id = player.teamid join game on team.game_id = game.id join hand on hand.id = player.handid where game.id = $1 and users.id = $2 AND hand.cardid = $3', [gameId, userId, cardId], (err, result) => {
     if (err) {
       console.log(err);
-    } else if (result.rows.length == 1) {
+    } else if (result.rows.length >= 1) {
       var playerId = result.rows[0].id;
-      client.query('SELECT * FROM game WHERE id =$1 AND player_turnid = $2 AND played_card = false', [gameId, playerId], (err, result) => {
+      client.query('SELECT game.id FROM game WHERE id =$1 AND player_turnid = $2 AND played_card = false', [gameId, playerId], (err, result) => {
         if (err) {
           console.log(err);
         } else if (result.rows.length == 1) {
           // this will be 1 if it is the players turn
-          client.query('select locationid, location.playerid, cardid  from location join board on board.locationid = location.id join game on game.boardid = board.id where game.id = $1', [gameId], (err, result) => {
-            console.log(result.rows.length);
+          client.query('select locationid, location.playerid, cardid, sequence from location join board on board.locationid = location.id join game on game.boardid = board.id where game.id = $1 ORDER BY location.id LIMIT 1 OFFSET $2', [gameId, locationId - 1], (err, result) => {
             if (err) {
               console.log(err);
-            } else if (result.rows.length == 100) {
-              var playedPlayerId = result.rows[locationId].playerid;
-              var playedCardId = result.rows[locationId].cardid;
+            } else if (result.rows.length == 1) {
+              var playedPlayerId = result.rows[0].playerid;
+              var playedCardId = result.rows[0].cardid;
+              var sequence = result.rows[0].sequnece;
               var matches = false;
               var jack = false;
               var eye = null;
-              if (locationId == 1 || locationId == 73) {
+              if (cardId == 11 || cardId == 24) {
+                jack = true;
+                eye = 2;
+              } else if (cardId == 37 || cardId == 50) {
+                jack = true;
+                eye = 1;
+              } else if (locationId == 1 || locationId == 73) {
                 if (cardId == 19) {
                   matches = true;
                 }
@@ -375,7 +414,7 @@ var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _r
                 if (cardId == 12) {
                   matches = true;
                 }
-              } else if (locationId == 27 || locationId == 48) {
+              } else if (locationId == 27 || locationId == 49) {
                 if (cardId == 10) {
                   matches = true;
                 }
@@ -479,19 +518,14 @@ var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _r
                 if (cardId == 6) {
                   matches = true;
                 }
-              } else if (cardId == 11 || cardId == 24) {
-                jack = true;
-                eye = 2;
-              } else if (cardId == 37 || cardId == 50) {
-                jack = true;
-                eye = 1;
+              } else {
+                console.log("None found?");
               }
 
-              // TODO: check for sequences
               // Insert the token onto this slot
               if (matches == true && playedPlayerId == null && playedCardId == null) {
-                client.query('INSERT INTO location (id, cardid, playerid) VALUES ($1,$2,$3)', [locationId, cardId, playerId], (err, result) => {
-                  console.log(result);
+                client.query('UPDATE location SET playerid = $1, cardid = $2 WHERE id = (SELECT locationid FROM board WHERE id = $3 LIMIT 1 OFFSET $4)', [playerId, cardId, gameId, locationId - 1], (err, result) => {
+                  //console.log(result);
                   if (err) {
                     console.log(err);
                   } else if (result.rowCount == 1) {
@@ -501,22 +535,46 @@ var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _r
                     removeCardFromHand(client, cardId, deckId, playerId);
                     // add card to discard
                     addCardToDiscard(client, cardId, deckId, gameId);
+                    // check for possible sequences
+                    checkForSequences(client, gameId, locationId);
+                    callback(null);
                     _res.json({
                       success: true
                     });
                   }
                 });
-              } else if (jack == true && eye == 1) {
+              } else if (jack == true && eye == 1 && !sequence) {
                 // if locationid is not part of a sequence, remove token
-                // if valid remove card from hand
-                // then add card to discard
-              } else if (jack == true && eye == 2) {
-                client.query('UPDATE location SET playerid = $1, cardid = $2', [playerId, cardId], (err, result) => {
+                client.query('UPDATE location SET playerid = null, cardid = null WHERE id = (SELECT locationid FROM board WHERE id = $1 LIMIT 1 OFFSET $2)', [gameId, locationId - 1], (err, result) => {
                   if (err) {
                     console.log(err);
                   } else if (result.rowCount == 1) {
+                    // mark that the user has played a card this turn
+                    userPlayedCard(client, gameId, playerId);
                     // remove card from Hand
+                    removeCardFromHand(client, cardId, deckId, playerId);
                     // add card to discard
+                    addCardToDiscard(client, cardId, deckId, gameId);
+                    callback(null);
+                    _res.json({
+                      success: true
+                    });
+                  }
+                });
+              } else if (jack == true && eye == 2 && playedPlayerId == null && playedCardId == null) {
+                client.query('UPDATE location SET playerid = $1, cardid = $2 WHERE id = (SELECT locationid FROM board WHERE id = $3 LIMIT 1 OFFSET $4)', [playerId, cardId, gameId, locationId - 1], (err, result) => {
+                  if (err) {
+                    console.log(err);
+                  } else if (result.rowCount == 1) {
+                    // mark that the user has played a card this turn
+                    userPlayedCard(client, gameId, playerId);
+                    // remove card from Hand
+                    removeCardFromHand(client, cardId, deckId, playerId);
+                    // add card to discard
+                    addCardToDiscard(client, cardId, deckId, gameId);
+                    // check for possible sequences
+                    checkForSequences(client, gameId, locationId);
+                    callback(null);
                     _res.json({
                       success: true
                     });
@@ -553,42 +611,368 @@ var placeToken = function(userId, gameId, cardId, locationId, deckId, client, _r
 
 function removeCardFromHand(client, cardId, deckId, playerId) {
   client.query('DELETE FROM hand WHERE cardid = $1 AND deckid = $2 and id = $3', [cardId, deckId, playerId], (err, result) => {
-    console.log(result);
     if (err) {
       console.log(err);
     } else if (result.rowCount == 1) {
       // TODO: emit hand to this user
+    } else {
+      //console.log(result);
+    }
+  });
+}
+
+function checkForSequences(client, gameId, locationId) {
+  client.query('SELECT color, sequence FROM location LEFT JOIN board ON board.locationid = location.id LEFT JOIN player ON player.id = location.playerid LEFT JOIN team ON team.id = player.teamid WHERE board.id = $1 ORDER BY location.id', [gameId], (err, result) => {
+    if (err) {
+      console.log(err);
+    } else if (result.rowCount == 100) {
+      var board = [];
+      for (var i = 0; i < 100; i++) {
+        if (result.rows[i].sequence == false) {
+          board[i] = result.rows[i].color;
+        }
+      }
+      locationId = Number(locationId) - 1;
+      checkRow(client, gameId, board, locationId);
+      checkColumn(client, gameId, board, locationId);
+      checkDiaginalRightShift(client, gameId, board, locationId);
+      checkDiaginalLeftShift(client, gameId, board, locationId);
+    } else {
+      //console.log(result);
+    }
+  });
+}
+
+function insertSequence(client, gameId, locationId) {
+  client.query('UPDATE location SET sequence = true WHERE location.id = (SELECT location.id FROM location LEFT JOIN board ON board.locationid = location.id WHERE board.id = $1 ORDER BY location.id LIMIT 1 OFFSET $2)', [gameId, locationId], (err, result) => {
+    if (err) {
+      console.log(err);
+    } else if (result.rows.length > 0) {
+      console.log(result.rows);
     } else {
       console.log(result);
     }
   });
 }
 
+function checkDiaginalRightShift(client, gameId, board, locationId) {
+  var count = [];
+  var color = board[locationId];
+  checkUpRight(color, board, locationId, count);
+  checkDownLeft(color, board, locationId, count);
+  count.push(locationId);
+  count.sort();
+  if (count.length >= 5) {
+    console.log("Sequence Found Diaginal Right Shift /", count);
+    for (var i = 0; i < 6; i++) {
+      console.log(board[count[i]]);
+      insertSequence(client, gameId, count[i]);
+    }
+  }
+}
+
+function checkUpRight(color, board, locationId, count) {
+  while ((color == board[locationId - 9] || locationId == 9) && ((locationId.toString().length != 1 || locationId >= 9) && locationId.toString().slice(-1) != 8)) {
+    if (locationId == 9) {
+      console.log("Top Right Diaginal");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Up Right:", count, "LocationId:", locationId);
+    count.push(locationId - 9);
+    locationId -= 9;
+  }
+}
+
+function checkDownLeft(color, board, locationId, count) {
+  while ((color == board[locationId + 9] || locationId == 90) && (locationId.toString().slice(-1) != 9 && (locationId < 90))) {
+    if (locationId == 90) {
+      console.log("Bottom Left Diaginal");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Down Left:", count, "LocationId:", locationId);
+    count.push(locationId + 9);
+    locationId += 9;
+  }
+}
+
+function checkDiaginalLeftShift(client, gameId, board, locationId) {
+  var count = [];
+  var color = board[locationId];
+  checkDownRight(color, board, locationId, count);
+  checkUpLeft(color, board, locationId, count);
+  count.push(locationId);
+  count.sort();
+  if (count.length >= 5) {
+    console.log("Sequence Found Diaginal Left Shift \\", count);
+    for (var i = 0; i < 6; i++) {
+      console.log(board[count[i]]);
+      insertSequence(client, gameId, count[i]);
+    }
+  }
+}
+
+
+function checkDownRight(color, board, locationId, count) {
+  while ((color == board[locationId + 11] || locationId == 87) && (locationId.toString().slice(-1) != 8 && (locationId < 90))) {
+    if (locationId == 87) {
+      console.log("Bottom Right Diaginal");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Down Right:", count, "LocationId:", locationId);
+    count.push(locationId + 11);
+    locationId += 11;
+  }
+}
+
+function checkUpLeft(color, board, locationId, count) {
+  while ((color == board[locationId - 11] || locationId == 0) && (locationId.toString().slice(-1) != 9 && (locationId.toString().length != 1 || locationId >= 9))) {
+    if (locationId == 0) {
+      console.log("Top Left Diaginal");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Up Left:", count, "LocationId:", locationId);
+    count.push(locationId - 11);
+    locationId -= 11;
+  }
+}
+
+function checkRow(client, gameId, board, locationId) {
+  var count = [];
+  var color = board[locationId];
+  checkLeft(color, board, locationId, count);
+  count.sort();
+  count.push(locationId);
+  checkRight(color, board, locationId, count);
+
+  if (count.length >= 5) {
+    console.log("Sequence Found Row!", count);
+    for (var i = 0; i < 6; i++) {
+      console.log(board[count[i]]);
+      insertSequence(client, gameId, count[i]);
+    }
+  }
+}
+
+function checkRight(color, board, locationId, count) {
+  while ((color == board[locationId + 1] || locationId == 9 || locationId == 99) && locationId.toString().slice(-1) != 8) {
+    console.log("Last Digit:", locationId.toString().slice(-1));
+    if (locationId == 9) { // TODO: didn't fire when placed on Ace of Diamonds slot 8
+      console.log("Top Right");
+      count.push(-1);
+      break;
+    } else if (locationId == 99) {
+      console.log("Bottom Right");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Right:", count, "LocationId:", locationId);
+    count.push(locationId + 1);
+    locationId++;
+  }
+}
+
+function checkLeft(color, board, locationId, count) {
+  while ((color == board[locationId - 1] || locationId == 0 || locationId == 90) && locationId.toString().slice(-1) != 9) {
+    if (locationId == 0) {
+      console.log("Top Left");
+      count.push(-1);
+      break;
+    } else if (locationId == 90) {
+      console.log("Bottom Left");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Left:", count, "LocationId:", locationId);
+    count.push(locationId - 1);
+    locationId--;
+  }
+}
+
+function checkColumn(client, gameId, board, locationId) {
+  var count = [];
+  var color = board[locationId];
+  checkUp(color, board, locationId, count);
+  count.sort();
+  count.push(locationId);
+  checkDown(color, board, locationId, count);
+  if (count.length >= 5) {
+    console.log("Sequence Found Column!", count);
+    for (var i = 0; i < 6; i++) {
+      console.log(board[count[i]]);
+      insertSequence(client, gameId, count[i]);
+    }
+  }
+}
+
+function checkUp(color, board, locationId, count) {
+  while ((color == board[locationId - 10] || locationId == 9 || locationId == 18) && (locationId.toString().length != 1 || locationId >= 9)) {
+    if (locationId == 9) {
+      console.log("Top Left");
+      count.push(-1);
+      break;
+    } else if (locationId == 18) {
+      console.log("Top Right");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Up:", count, "LocationId:", locationId);
+    count.push(locationId - 10);
+    locationId -= 10;
+  }
+}
+
+function checkDown(color, board, locationId, count) {
+  while ((color == board[locationId + 10] || locationId == 79 || locationId == 88) && (locationId < 90)) {
+    if (locationId == 79) {
+      console.log("Bottom Left");
+      count.push(-1);
+      break;
+    } else if (locationId == 88) {
+      console.log("Bottom Right");
+      count.push(-1);
+      break;
+    }
+    console.log("Fired Down:", count, "LocationId:", locationId);
+    count.push(locationId + 10);
+    locationId += 10;
+  }
+}
+
 function addCardToDiscard(client, cardId, deckId, gameId) {
   client.query('INSERT INTO discard (gameid, cardid, deckid) VALUES ($1, $2, $3)', [gameId, cardId, deckId], (err, result) => {
-    console.log(result);
+    //console.log(result);
     if (err) {
       console.log(err);
     } else if (result.rowCount == 1) {
       // TODO: broadcast for each user to get the discard pile
     } else {
-      console.log(result);
+      //console.log(result);
     }
   });
 }
 
 function userPlayedCard(client, gameId, playerId) {
   client.query('UPDATE game SET played_card = true WHERE id = $1 AND player_turnid = $2', [gameId, playerId], (err, result) => {
-    console.log(result);
+    //console.log(result);
     if (err) {
       console.log(err);
     } else if (result.rowCount == 1) {
       // TODO: chain these events and make them commit only if they are all successful somehow
     } else {
-      console.log(result);
+      //console.log(result);
     }
   });
 }
+
+function userDiscardedCard(client, gameId, playerId) {
+  client.query('UPDATE game SET dead_card = true WHERE id = $1 AND player_turnid = $2', [gameId, playerId], (err, result) => {
+    //console.log(result);
+    if (err) {
+      console.log(err);
+    } else if (result.rowCount == 1) {
+      // TODO: chain these events and make them commit only if they are all successful somehow
+    } else {
+      //console.log(result);
+    }
+  });
+}
+
+var getBoard = function(gameId, client, _res) {
+  client.query('SELECT team.color, location.sequence FROM location JOIN board ON board.locationid = location.id LEFT JOIN player ON player.id = location.playerid LEFT JOIN team ON team.id = player.teamid WHERE board.id = $1 ORDER BY location.id', [gameId], (err, result) => {
+    if (err) {
+      console.log(err);
+    } else if (result.rows.length > 0) {
+      var board = [];
+      for (var i = 0; i < result.rows.length; i++) {
+        if (result.rows[i].color != null) {
+          var location = {};
+          location.id = i + 1;
+          location.sequence = result.rows[i].sequence;
+          location.color = result.rows[i].color;
+          board.push(location);
+        }
+      }
+      _res.json({
+        success: true,
+        playerId: result.rows[0].playerId,
+        userId: result.rows[0].usersid,
+        board: board
+      });
+    } else {
+      _res.json({
+        success: false,
+        message: "Unable to find who's turn it is"
+      });
+    }
+  });
+};
+
+var discardCard = function(client, gameId, cardId, deckId, userId, _res) {
+  // get the players id, and verify they have that card
+  client.query('select player.handid, player.id from users join player on player.usersid = users.id join team on team.id = player.teamid join game on team.game_id = game.id join hand on hand.id = player.handid where game.id = $1 and users.id = $2 AND hand.cardid = $3 AND game.dead_card = false', [gameId, userId, cardId], (err, result) => {
+    if (err) {
+      console.log(err);
+    } else if (result.rows.length >= 1) {
+      var playerId = result.rows[0].id;
+      client.query('select game.id from game where player_turnid = $1 and player_draw = false', [playerId], (err, result) => {
+        if (err) {
+          console.log(err);
+        } else if (result.rows.length >= 1) {
+          if (result.rows[0].id == gameId) {
+            // mark that the user has discarded a card this turn
+            userDiscardedCard(client, gameId, playerId);
+            // remove card from Hand
+            removeCardFromHand(client, cardId, deckId, playerId);
+            // add card to discard
+            addCardToDiscard(client, cardId, deckId, gameId);
+            // add a card to the players hand
+            // find a card
+            client.query('SELECT deckid, cardid FROM game_deck WHERE gameid = $1 ORDER BY RANDOM()', [gameId], (err, result) => {
+              if (err) {
+                console.log(err);
+              } else if (result.rows.length >= 1) {
+                if (result.rows.length <= 1) {
+                  resetDecks(client, gameId);
+                }
+                // insert the card into your hand
+                var cardId = result.rows[0].cardid;
+                var deckId = result.rows[0].deckid;
+                client.query('INSERT INTO hand(id, cardid, deckid) VALUES($1, $2, $3)', [playerId, cardId, deckId], (err, result) => {
+                  if (err) {
+                    console.log(err);
+                  } else if (result.rowCount == 1) {
+                    // insert the card into your hand
+                    client.query('DELETE FROM game_deck WHERE cardid = $1 AND deckid = $2 AND gameid = $3', [cardId, deckId, gameId], (err, result) => {
+                      if (err) {
+                        console.log(err);
+                      } else if (result.rowCount == 1) {
+                        _res.json({
+                          success: true
+                        });
+                      } else {
+                        _res.json({
+                          success: false
+                        });
+                      }
+                    });
+                  } else {
+                    _res.json({
+                      success: false
+                    });
+                  }
+                });
+              }
+            });
+          }
+        }
+      });
+    }
+  });
+};
 
 exports.drawCard = drawCard;
 exports.endTurn = endTurn;
@@ -597,6 +981,8 @@ exports.getPlayers = getPlayers;
 exports.getHand = getHand;
 exports.getPlayerTurn = getPlayerTurn;
 exports.placeToken = placeToken;
+exports.getBoard = getBoard;
+exports.discardCard = discardCard;
 
 // placeToken POST
 

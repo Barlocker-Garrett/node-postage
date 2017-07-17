@@ -56,7 +56,7 @@ gameNSP.on('connection', function(socket) {
   socket.on('logout', function(creds) {
     // TODO: remove from any active games
     console.log('User disconnected from single Game NSP');
-    console.log(creds);
+    //console.log(creds);
   });
 });
 
@@ -123,7 +123,7 @@ app.get('/loadGame', function(req, res) {
 app.post('/createAccount', function(req, res) {
   pool.connect(function(err, client, done) {
     if (err) throw new Error(err);
-    console.log(req.body);
+    //console.log(req.body);
     if (req.body.username != null && req.body.password != null) {
       done(err);
       account.createAccount(req.body.username, req.body.password, client, res);
@@ -140,7 +140,7 @@ app.post('/createAccount', function(req, res) {
 app.post('/login', function(req, res) {
   pool.connect(function(err, client, done) {
     if (err) throw new Error(err);
-    console.log(req.body);
+    //console.log(req.body);
     if (req.body.username != null && req.body.password != null) {
       done(err);
       account.login(req.body.username, req.body.password, client, res, io);
@@ -218,7 +218,7 @@ app.get('/getGameSlot', function(req, res) {
     if (err) throw new Error(err);
     var gameId = req.query.gameId;
     var playerId = req.query.playerId;
-    console.log("PlayerId:" + playerId);
+    //console.log("PlayerId:" + playerId);
     if (req.query.userId != null && req.query.token != null && gameId != null && playerId != null) {
       var valid = null;
       account.verify(req.query.userId, req.query.token, client, function(error, valid) {
@@ -256,7 +256,7 @@ app.delete('/leaveGame', function(req, res) {
           gameLobby.leaveGame(req.body.playerId, client, res, function(err, games) {
             gameLobbyNSP.emit('gameList', games);
             var players = null;
-            console.log("GameId:" + req.body.gameId);
+            //console.log("GameId:" + req.body.gameId);
             game.getPlayers(client, req.body.gameId, function(err, players) {
               gameNSP.emit('playerList', players);
             });
@@ -304,7 +304,7 @@ app.delete('/deleteGame', function(req, res) {
 });
 
 app.post('/startGame', function(req, res) {
-  console.log("Hit");
+  //console.log("Hit");
   pool.connect(function(err, client, done) {
     if (err) throw new Error(err);
     if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
@@ -386,14 +386,14 @@ app.post('/getPlayers', function(req, res) {
   pool.connect(function(err, client, done) {
     if (err) throw new Error(err);
     var gameId = req.body.gameId;
-    console.log(req.body);
+    //console.log(req.body);
     if (req.body.userId != null && req.body.token != null && gameId != null) {
       var valid = null;
       account.verify(req.body.userId, req.body.token, client, function(error, valid) {
         if (valid == req.body.userId) {
           var players = null;
           game.getPlayers(client, gameId, function(error, players) {
-            console.log(players);
+            //console.log(players);
             done(err);
             res.render("./partials/players.ejs", {
               results: players
@@ -401,13 +401,13 @@ app.post('/getPlayers', function(req, res) {
           });
         } else {
           done(err);
-          console.log("Invalid Login");
+          //console.log("Invalid Login");
           res.render("./pages/login.ejs");
         }
       });
     } else {
       done(err);
-      console.log("Invalid REQ");
+      //console.log("Invalid REQ");
       res.render("./pages/login.ejs");
     }
   });
@@ -490,6 +490,33 @@ app.post('/getDiscardPile', function(req, res) {
   });
 });
 
+app.post('/discardCard', function(req, res) {
+  console.log("hit");
+  pool.connect(function(err, client, done) {
+    if (err) throw new Error(err);
+    if (req.body.userId != null && req.body.token != null && req.body.gameId != null) {
+      var valid = null;
+      account.verify(req.body.userId, req.body.token, client, function(error, valid) {
+        if (valid != null) {
+          game.discardCard(client, req.body.gameId, req.body.card.id, req.body.card.deckId, req.body.userId, res, function(){
+            done(err);
+          });
+        } else {
+          done(err);
+          res.json({
+            success: false
+          });
+        }
+      });
+    } else {
+      done(err);
+      res.json({
+        success: false
+      });
+    }
+  });
+});
+
 app.post('/getHand', function(req, res) {
   pool.connect(function(err, client, done) {
     if (err) throw new Error(err);
@@ -549,7 +576,35 @@ app.post('/playCard', function(req, res) {
       var valid = null;
       account.verify(req.body.userId, req.body.token, client, function(error, valid) {
         if (valid != null) {
-          game.placeToken(req.body.userId, req.body.gameId, req.body.card.id, req.body.location, req.body.card.deckId, client, res);
+          game.placeToken(req.body.userId, req.body.gameId, req.body.card.id, req.body.location, req.body.card.deckId, client, res, function(err) {
+            gameNSP.emit('updateBoard', err);
+          });
+          done(err);
+        } else {
+          done(err);
+          res.json({
+            success: false
+          });
+        }
+      });
+    } else {
+      done(err);
+      res.json({
+        success: false
+      });
+    }
+  });
+});
+
+app.post('/getBoard', function(req, res) {
+  pool.connect(function(err, client, done) {
+    if (err) throw new Error(err);
+    if (req.body.userId != null && req.body.token != null &&
+      req.body.gameId != null) {
+      var valid = null;
+      account.verify(req.body.userId, req.body.token, client, function(error, valid) {
+        if (valid != null) {
+          game.getBoard(req.body.gameId, client, res);
           done(err);
         } else {
           done(err);

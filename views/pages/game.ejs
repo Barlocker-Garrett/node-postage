@@ -13,14 +13,14 @@
     <div id="title">
         <h1>Sequence</h1>
     </div>
-    <div id="rules">
+    <!--<div id="rules">
         <div class="jacks">
             &#9679;&nbsp;Two Eyed Jacks Are Wild&nbsp;&#9679;
         </div>
         <div class="jacks">
             &#9679;&nbsp;One Eyed Jacks Remove&nbsp;&#9679;
         </div>
-    </div>
+    </div>-->
 
     <div id="hand_container">
         <div id="toggle_hand" class="select_toggle">
@@ -58,18 +58,24 @@
     </div>
 
     <div>
-        <button id="endTurn">End Turn</button>
+        <button id="endTurn">End Turn<i class="material-icons green-text lighten-2">done</i></button>
+    </div>
+
+    <div>
+        <button id="discardButton">Discard<i class="material-icons red-text lighten-2">close</i></button>
     </div>
 
     <div class="row">
-        <div class="col s16 m3">
+        <div class="col">
             <table class='bordered striped teamTable'>
                 <thead class="white">
                     <tr>
-                        <th>Player Name</th>
-                        <th>Team</th>
+                        <th id="refreshPlayers"><i class="material-icons grey-text lighten-2">person</i></th>
+                        <th id="refreshPlayers"><i class="material-icons grey-text lighten-2">group</i></th>
                         <th></th>
-                        <th id="refreshPlayers"><i class="material-icons blue-text lighten-2 right">loop</i></th>
+                        <th>
+                          Turn
+                        </th></th>
                     </tr>
                 </thead>
                 <tbody id='playersTable'>
@@ -81,124 +87,424 @@
 
     <div id="board">
         <div class="row">
+          <span>
             <img class="card slot90" src="/images/card_back_blue.svg" alt="Free Space">
+            <span id="slot90"></span>
+          </span>
+          <span>
             <img class="card slot80" src="/images/10_of_spades.svg" alt="">
+            <span id="slot80"></span>
+          </span>
+          <span>
             <img class="card slot70" src="/images/queen_of_spades.svg" alt="">
+            <span id="slot70"></span>
+          </span>
+          <span>
             <img class="card slot60" src="/images/king_of_spades.svg" alt="">
+            <span id="slot60"></span>
+          </span>
+          <span>
             <img class="card slot50" src="/images/ace_of_spades.svg" alt="">
+            <span id="slot50"></span>
+          </span>
+          <span>
             <img class="card slot40" src="/images/2_of_diamonds.svg" alt="">
+            <span id="slot40"></span>
+          </span>
+          <span>
             <img class="card slot30" src="/images/3_of_diamonds.svg" alt="">
+            <span id="slot30"></span>
+          </span>
+          <span>
             <img class="card slot20" src="/images/4_of_diamonds.svg" alt="">
+            <span id="slot20"></span>
+          </span>
+          <span>
             <img class="card slot10" src="/images/5_of_diamonds.svg" alt="">
+            <span id="slot10"></span>
+          </span>
+          <span>
             <img class="card slot0" src="/images/card_back_blue.svg" alt="">
+            <span id="slot0" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot91" src="/images/9_of_spades.svg" alt="">
+            <span id="slot91"></span>
+          </span>
+          <span>
             <img class="card slot81" src="/images/10_of_hearts.svg" alt="">
+            <span id="slot81"></span>
+          </span>
+          <span>
             <img class="card slot71" src="/images/9_of_hearts.svg" alt="">
+            <span id="slot71"></span>
+          </span>
+          <span>
             <img class="card slot61" src="/images/8_of_hearts.svg" alt="">
+            <span id="slot61"></span>
+          </span>
+          <span>
             <img class="card slot51" src="/images/7_of_hearts.svg" alt="">
+            <span id="slot51"></span>
+          </span>
+          <span>
             <img class="card slot41" src="/images/6_of_hearts.svg" alt="">
+            <span id="slot41"></span>
+          </span>
+          <span>
             <img class="card slot31" src="/images/5_of_hearts.svg" alt="">
+            <span id="slot31"></span>
+          </span>
+          <span>
             <img class="card slot21" src="/images/4_of_hearts.svg" alt="">
+            <span id="slot21"></span>
+          </span>
+          <span>
             <img class="card slot11" src="/images/3_of_hearts.svg" alt="">
+            <span id="slot11"></span>
+          </span>
+          <span>
             <img class="card slot1" src="/images/6_of_diamonds.svg" alt="">
+            <span id="slot1" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot92" src="/images/8_of_spades.svg" alt="">
+            <span id="slot92"></span>
+          </span>
+          <span>
             <img class="card slot82" src="/images/queen_of_hearts.svg" alt="">
+            <span id="slot82"></span>
+          </span>
+          <span>
             <img class="card slot72" src="/images/7_of_diamonds.svg" alt="">
+            <span id="slot72"></span>
+          </span>
+          <span>
             <img class="card slot62" src="/images/8_of_diamonds.svg" alt="">
+            <span id="slot62"></span>
+          </span>
+          <span>
             <img class="card slot52" src="/images/9_of_diamonds.svg" alt="">
+            <span id="slot52"></span>
+          </span>
+          <span>
             <img class="card slot42" src="/images/10_of_diamonds.svg" alt="">
+            <span id="slot42"></span>
+          </span>
+          <span>
             <img class="card slot32" src="/images/queen_of_diamonds.svg" alt="">
+            <span id="slot32"></span>
+          </span>
+          <span>
             <img class="card slot22" src="/images/king_of_diamonds.svg" alt="">
+            <span id="slot22"></span>
+          </span>
+          <span>
             <img class="card slot12" src="/images/2_of_hearts.svg" alt="">
+            <span id="slot12"></span>
+          </span>
+          <span>
             <img class="card slot2" src="/images/7_of_diamonds.svg" alt="">
+            <span id="slot2" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot93" src="/images/7_of_spades.svg" alt="">
+            <span id="slot93"></span>
+          </span>
+          <span>
             <img class="card slot83" src="/images/king_of_hearts.svg" alt="">
+            <span id="slot83"></span>
+          </span>
+          <span>
             <img class="card slot73" src="/images/6_of_diamonds.svg" alt="">
+            <span id="slot73"></span>
+          </span>
+          <span>
             <img class="card slot63" src="/images/2_of_clubs.svg" alt="">
+            <span id="slot63"></span>
+          </span>
+          <span>
             <img class="card slot53" src="/images/ace_of_hearts.svg" alt="">
+            <span id="slot53"></span>
+          </span>
+          <span>
             <img class="card slot43" src="/images/king_of_hearts.svg" alt="">
+            <span id="slot43"></span>
+          </span>
+          <span>
             <img class="card slot33" src="/images/queen_of_hearts.svg" alt="">
+            <span id="slot33"></span>
+          </span>
+          <span>
             <img class="card slot23" src="/images/ace_of_diamonds.svg" alt="">
+            <span id="slot23"></span>
+          </span>
+          <span>
             <img class="card slot13" src="/images/2_of_spades.svg" alt="">
+            <span id="slot13"></span>
+          </span>
+          <span>
             <img class="card slot3" src="/images/8_of_diamonds.svg" alt="">
+            <span id="slot3" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot94" src="/images/6_of_spades.svg" alt="">
+            <span id="slot94"></span>
+          </span>
+          <span>
             <img class="card slot84" src="/images/ace_of_hearts.svg" alt="">
+            <span id="slot84"></span>
+          </span>
+          <span>
             <img class="card slot74" src="/images/5_of_diamonds.svg" alt="">
+            <span id="slot74"></span>
+          </span>
+          <span>
             <img class="card slot64" src="/images/3_of_clubs.svg" alt="">
+            <span id="slot64"></span>
+          </span>
+          <span>
             <img class="card slot54" src="/images/4_of_hearts.svg" alt="">
+            <span id="slot54"></span>
+          </span>
+          <span>
             <img class="card slot44" src="/images/3_of_hearts.svg" alt="">
+            <span id="slot44"></span>
+          </span>
+          <span>
             <img class="card slot34" src="/images/10_of_hearts.svg" alt="">
+            <span id="slot34"></span>
+          </span>
+          <span>
             <img class="card slot24" src="/images/ace_of_clubs.svg" alt="">
+            <span id="slot24"></span>
+          </span>
+          <span>
             <img class="card slot14" src="/images/3_of_spades.svg" alt="">
+            <span id="slot14"></span>
+          </span>
+          <span>
             <img class="card slot4" src="/images/9_of_diamonds.svg" alt="">
+            <span id="slot4" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot95" src="/images/5_of_spades.svg" alt="">
+            <span id="slot95"></span>
+          </span>
+          <span>
             <img class="card slot85" src="/images/2_of_clubs.svg" alt="">
+            <span id="slot85"></span>
+          </span>
+          <span>
             <img class="card slot75" src="/images/4_of_diamonds.svg" alt="">
+            <span id="slot75"></span>
+          </span>
+          <span>
             <img class="card slot65" src="/images/4_of_clubs.svg" alt="">
+            <span id="slot65"></span>
+          </span>
+          <span>
             <img class="card slot55" src="/images/5_of_hearts.svg" alt="">
+            <span id="slot55"></span>
+          </span>
+          <span>
             <img class="card slot45" src="/images/2_of_hearts.svg" alt="">
+            <span id="slot45"></span>
+          </span>
+          <span>
             <img class="card slot35" src="/images/9_of_hearts.svg" alt="">
+            <span id="slot35"></span>
+          </span>
+          <span>
             <img class="card slot25" src="/images/king_of_clubs.svg" alt="">
+            <span id="slot25"></span>
+          </span>
+          <span>
             <img class="card slot15" src="/images/4_of_spades.svg" alt="">
+            <span id="slot15"></span>
+          </span>
+          <span>
             <img class="card slot5" src="/images/10_of_diamonds.svg" alt="">
+            <span id="slot5" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot96" src="/images/4_of_spades.svg" alt="">
+            <span id="slot96"></span>
+          </span>
+          <span>
             <img class="card slot86" src="/images/3_of_clubs.svg" alt="">
+            <span id="slot86"></span>
+          </span>
+          <span>
             <img class="card slot76" src="/images/3_of_diamonds.svg" alt="">
+            <span id="slot76"></span>
+          </span>
+          <span>
             <img class="card slot66" src="/images/5_of_clubs.svg" alt="">
+            <span id="slot66"></span>
+          </span>
+          <span>
             <img class="card slot56" src="/images/6_of_hearts.svg" alt="">
+            <span id="slot56"></span>
+          </span>
+          <span>
             <img class="card slot46" src="/images/7_of_hearts.svg" alt="">
+            <span id="slot46"></span>
+          </span>
+          <span>
             <img class="card slot36" src="/images/8_of_hearts.svg" alt="">
+            <span id="slot36"></span>
+          </span>
+          <span>
             <img class="card slot26" src="/images/queen_of_clubs.svg" alt="">
+            <span id="slot26"></span>
+          </span>
+          <span>
             <img class="card slot16" src="/images/5_of_spades.svg" alt="">
+            <span id="slot16"></span>
+          </span>
+          <span>
             <img class="card slot6" src="/images/queen_of_diamonds.svg" alt="">
+            <span id="slot6" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot97" src="/images/3_of_spades.svg" alt="">
+            <span id="slot97"></span>
+          </span>
+          <span>
             <img class="card slot87" src="/images/4_of_clubs.svg" alt="">
+            <span id="slot87"></span>
+          </span>
+          <span>
             <img class="card slot77" src="/images/2_of_diamonds.svg" alt="">
+            <span id="slot77"></span>
+          </span>
+          <span>
             <img class="card slot67" src="/images/6_of_clubs.svg" alt="">
+            <span id="slot67"></span>
+          </span>
+          <span>
             <img class="card slot57" src="/images/7_of_clubs.svg" alt="">
+            <span id="slot57"></span>
+          </span>
+          <span>
             <img class="card slot47" src="/images/8_of_clubs.svg" alt="">
+            <span id="slot47"></span>
+          </span>
+          <span>
             <img class="card slot37" src="/images/9_of_clubs.svg" alt="">
+            <span id="slot37"></span>
+          </span>
+          <span>
             <img class="card slot27" src="/images/10_of_clubs.svg" alt="">
+            <span id="slot27"></span>
+          </span>
+          <span>
             <img class="card slot17" src="/images/6_of_spades.svg" alt="">
+            <span id="slot17"></span>
+          </span>
+          <span>
             <img class="card slot7" src="/images/king_of_diamonds.svg" alt="">
+            <span id="slot7" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot98" src="/images/2_of_spades.svg" alt="">
+            <span id="slot98"></span>
+          </span>
+          <span>
             <img class="card slot88" src="/images/5_of_clubs.svg" alt="">
+            <span id="slot88"></span>
+          </span>
+          <span>
             <img class="card slot78" src="/images/ace_of_spades.svg" alt="">
+            <span id="slot78"></span>
+          </span>
+          <span>
             <img class="card slot68" src="/images/king_of_spades.svg" alt="">
+            <span id="slot68"></span>
+          </span>
+          <span>
             <img class="card slot58" src="/images/queen_of_spades.svg" alt="">
+            <span id="slot58"></span>
+          </span>
+          <span>
             <img class="card slot48" src="/images/10_of_spades.svg" alt="">
+            <span id="slot48"></span>
+          </span>
+          <span>
             <img class="card slot38" src="/images/9_of_spades.svg" alt="">
+            <span id="slot38"></span>
+          </span>
+          <span>
             <img class="card slot28" src="/images/8_of_spades.svg" alt="">
+            <span id="slot28"></span>
+          </span>
+          <span>
             <img class="card slot18" src="/images/7_of_spades.svg" alt="">
+            <span id="slot18"></span>
+          </span>
+          <span>
             <img class="card slot8" src="/images/ace_of_diamonds.svg" alt="">
+            <span id="slot8" class="top-card-token"></span>
+          </span>
         </div>
         <div class="row">
+          <span>
             <img class="card slot99" src="/images/card_back_blue.svg" alt="">
+            <span id="slot99"></span>
+          </span>
+          <span>
             <img class="card slot89" src="/images/6_of_clubs.svg" alt="">
+            <span id="slot89"></span>
+          </span>
+          <span>
             <img class="card slot79" src="/images/7_of_clubs.svg" alt="">
+            <span id="slot79"></span>
+          </span>
+          <span>
             <img class="card slot69" src="/images/8_of_clubs.svg" alt="">
+            <span id="slot69"></span>
+          </span>
+          <span>
             <img class="card slot59" src="/images/9_of_clubs.svg" alt="">
+            <span id="slot59"></span>
+          </span>
+          <span>
             <img class="card slot49" src="/images/10_of_clubs.svg" alt="">
+            <span id="slot49"></span>
+          </span>
+          <span>
             <img class="card slot39" src="/images/queen_of_clubs.svg" alt="">
+            <span id="slot39"></span>
+          </span>
+          <span>
             <img class="card slot29" src="/images/king_of_clubs.svg" alt="">
+            <span id="slot29"></span>
+          </span>
+          <span>
             <img class="card slot19" src="/images/ace_of_clubs.svg" alt="">
+            <span id="slot19"></span>
+          </span>
+          <span>
             <img class="card slot9" src="/images/card_back_blue.svg" alt="">
+            <span id="slot9" class="top-card-token"></span>
+          </span>
         </div>
     </div>
 </body>

@@ -180,6 +180,7 @@ body {
 .teamTable {
     margin-top: 15px;
     border: 2px solid transparent;
+    height: 40rem;
 }
 
 tr {
@@ -187,7 +188,7 @@ tr {
 }
 
 table {
-    margin-left: 15%;
+    margin-left: 50%;
     display: block;
     border-bottom: 2px solid #333;
 }
@@ -195,4 +196,55 @@ table {
 .turn {
     font-size: 35px;
     line-height: 18px;
+}
+
+.token-red {
+  width: 50px;
+  height: 50px;
+  z-index: 3;
+  margin-left: -60px;
+  margin-top: 30px;
+  position:absolute;
+  background-color: red;
+  border-radius: 50px;
+}
+
+.token-blue {
+  width: 50px;
+  height: 50px;
+  z-index: 3;
+  margin-left: -60px;
+  margin-top: 30px;
+  position:absolute;
+  background-color: blue;
+  border-radius: 50px;
+}
+
+.top-card-token {
+  transform: translate(670px, -122px);
+}
+
+.sequence-red {
+  background-color: indianred;
+}
+
+.sequence-blue {
+  background-color: skyblue;
+}
+
+#endTurn {
+  position: absolute;
+  margin-top: 1.5rem;
+  margin-left: 20rem;
+}
+
+#endTurn:focus, #discardButton:focus {
+  background-color: rgb(239,239,239) !important;
+}
+
+#discardButton {
+  display: none;
+  position: absolute;
+  margin-top: 5.5rem;
+  margin-left: 20rem;
 }
